@@ -1,0 +1,22 @@
+name: Package verified upstream binaries
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - name: Package and validate architecture and checksums
+        shell: pwsh
+        run: ./scripts/package.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: YR-MO-DXVK64-Bridge-release
+          path: |
+            dist/*.zip
+            dist/*.sha256
+          if-no-files-found: error

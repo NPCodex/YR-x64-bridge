@@ -1,0 +1,19 @@
+{
+  "bridge": {
+    "source_commit": "6c6dc09d7b1053f304ff6d7b353edadb46d6ca78",
+    "sha256": "7344357411550a0fcf2130d4b3b52d20bef7eee1363de08f84b1e14b0da37dac",
+    "release": "v1.1.0",
+    "url": "https://github.com/yeyunyyds/L4D2_Dxvk_32to64_Bridge/releases/download/v1.1.0/l4d2-bridge-v1.1.zip",
+    "repository": "https://github.com/yeyunyyds/L4D2_Dxvk_32to64_Bridge"
+  },
+  "bridge_base": {
+    "commit": "9aa74f8dfad2188efbd0f717c64d9f8fa909787e",
+    "repository": "https://github.com/NVIDIAGameWorks/dxvk-remix"
+  },
+  "dxvk": {
+    "version": "2.6.1",
+    "sha256": "7ee0bef415910c943d3bda47d9d6821b9c8ca7a74f1e9f6151707d268cf3ce7f",
+    "url": "https://github.com/doitsujin/dxvk/releases/download/v2.6.1/dxvk-2.6.1.tar.gz",
+    "repository": "https://github.com/doitsujin/dxvk"
+  }
+}
