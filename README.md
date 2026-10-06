@@ -6,9 +6,9 @@
 
 ## 安装
 
-1. 将 Release ZIP 的内容直接解压到游戏根目录，与 `gamemd.exe` 同级。
-2. 建议使用 cnc-ddraw 渲染器。
-3. 启动游戏。
+1. 将 Release ZIP 的内容中的 `d3d9.dll` 和 `.l4d2bridge` 文件夹直接解压到游戏根目录，与 `gamemd.exe` 同级。
+2. 启动游戏。
+3. 建议把渲染器改为 `cnc-ddraw` 。
 
 需要 cnc-ddraw 时，可从 [官方项目](https://github.com/FunkyFr3sh/cnc-ddraw) 获取；安装其他渲染器前先还原本桥接。
 
