@@ -2,7 +2,7 @@
 
 给《尤里的复仇》和心灵终结（Mental Omega）使用的 D3D9 → x64 DXVK 桥接集成包。游戏和游戏逻辑仍是 32 位，渲染后端运行在独立的 64 位进程中。
 
-本项目复用 yeyunyyds 的 L4D2 Bridge v1.1 和官方 DXVK 2.6.1，提供 YR/MO 配置、简单安装说明、固定依赖和发布脚本。它不是重新编译的 64 位游戏引擎，也不包含游戏文件。
+本项目参考 L4D2 Nightly 的补丁和构建方法，自动编译 NVIDIA dxvk-remix main 的最新 Bridge，并搭配固定的 DXVK-GPLALL 2.6.8-2 x64 后端。它不是重新编译的 64 位游戏引擎，也不包含游戏文件。
 
 ## 安装
 
@@ -23,7 +23,7 @@
 └── .l4d2bridge/
     ├── bridge.conf
     ├── L4D2Bridge64.exe         # x64 Host，名称沿用上游
-    └── d3d9vk_x64.dll           # 官方 x64 DXVK 后端
+    └── d3d9vk_x64.dll           # GPLALL x64 DXVK 后端
 ```
 
 不要把普通 DXVK 的 `d3d9.dll` 覆盖到本包的桥接客户端上，也不要单独双击 Host。Host 由游戏侧桥接自动启动。若可执行文件改名，需同步修改两份 `bridge.conf` 的 `client.targetProcess` 为实际游戏进程名。
@@ -38,26 +38,25 @@
 
 退出游戏和 Host，恢复安装前备份的 `d3d9.dll`、两份配置、桥接目录及 `ddraw.ini`。若文件原先不存在，移走本包对应文件即可。切换普通渲染器前先移走桥接 `d3d9.dll`，避免继续进入这条链路。
 
-## 源码和发布
+## 自动构建和发布
 
-仅重新打包已发布二进制，无需编译器：
+推送本仓库至默认分支后，在 Actions 中启用 **Build YR MO Nightly**。
+每小时第 23 分钟检查 NVIDIA main；GitHub 调度可能延迟。检测新提交后编译 x86 客户端及匹配 x64 Host，运行诊断测试，再自动发布预发布版。
+手动执行 Run workflow 时，upstream_commit 留空跟随 main，或填写完整 40 位 SHA。force_rebuild 可重建已有版本。
+使用仓库自带 GITHUB_TOKEN，无需个人令牌。发布任务具备 contents:write 权限。
 
-```powershell
-pwsh -File scripts/package.ps1
-```
+config/backend.json 固定 GPLALL 2.6.8-2 的下载地址和 SHA256。后端不会自动升级；更新该文件后，其指纹会参与发布标签，即使 Bridge 没变化也能生成新包。
+补丁冲突、编译、诊断或校验失败时不发布。游戏兼容性仍需实测。
 
-脚本下载固定发布包、校验 SHA256 和 PE 位数，生成 `dist/YR-MO-DXVK64-Bridge-v0.1.0.zip`。本地已有对应完整上游包时，可传 `-BridgeDirectory`。压缩包包含 `.l4d2bridge` 和许可证，不包含游戏或 cnc-ddraw。
-
-从 Bridge 源码编译：
+本地源码构建需要 Windows、Python 3.11、Git、VS C++ x86/x64 工具链及 Windows SDK：
 
 ```powershell
 python -m pip install meson==1.3.2 ninja==1.11.1.1
-pwsh -File scripts/build-from-source.ps1
+pwsh -File scripts/build-from-source.ps1 -UpstreamCommit <完整提交SHA>
 ```
 
-需要 Git、Python 3.11、Windows PowerShell、Visual Studio C++ x86/x64 工具链（上游参考 MSVC 14.29）和 Windows SDK。`-VcVarsVer` 可指定已安装工具链版本；其他版本兼容性需自行验证。脚本使用随附上游源码补丁和固定 RTX Remix Bridge 提交获取实际基础源码，编译客户端与 Host，再执行本项目打包。DXVK 使用校验后的官方二进制；其源码在固定 v2.6.1 标签。详见 [构建说明](docs/BUILD.md)。
-
-将本目录内容上传为 GitHub 仓库即可。创建 `v0.1.0` Release，上传 `dist` 中的 ZIP 和 `.sha256`，正文可使用 [发布说明](docs/RELEASE-v0.1.0.md)。附带的工作流通过固定上游发布包组装附件；它不声称从源码编译，也不自动发布 Release。
+输出 ZIP 的文件直接解压到游戏根目录，无 bin 层，不包含 ddraw.dll。
+旧的 Package verified upstream binaries 工作流保留为手动执行的 v1.1/官方 DXVK 2.6.1 历史打包通道；不要把它当作 Nightly。
 
 ## 归属
 

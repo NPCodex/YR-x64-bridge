@@ -40,7 +40,9 @@ Copy-Item -LiteralPath $bridgeHostPath -Destination (Join-Path $output '.l4d2bri
 Copy-Item -LiteralPath $backend -Destination (Join-Path $output '.l4d2bridge/d3d9vk_x64.dll')
 foreach($relative in @('bridge.conf','.l4d2bridge/bridge.conf')){Copy-Item -LiteralPath (Join-Path $root 'config/bridge.conf') -Destination (Join-Path $output $relative)}
 foreach($file in @('README.md','LICENSE','THIRD_PARTY.md','VERSION','dependencies.json')){Copy-Item -LiteralPath (Join-Path $root $file) -Destination $output}
-Copy-Item -LiteralPath (Join-Path $root 'licenses') -Destination $output -Recurse
+if(Test-Path -LiteralPath (Join-Path $BridgeDirectory 'BACKEND.json')){Copy-Item -LiteralPath (Join-Path $BridgeDirectory 'BACKEND.json') -Destination (Join-Path $output 'BACKEND.json')}
+if($env:UPSTREAM_COMMIT){@{upstream_commit=$env:UPSTREAM_COMMIT;recipe_commit=$env:GITHUB_SHA;game_validation='Pending'} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'UPSTREAM.json'); Copy-Item -LiteralPath (Join-Path $root 'config/backend.json') -Destination (Join-Path $output 'dependencies.json') -Force}
+Copy-Item -LiteralPath (Join-Path $BridgeDirectory 'licenses') -Destination $output -Recurse
 Copy-Item -LiteralPath (Join-Path $root 'docs') -Destination $output -Recurse
 $hashes=[ordered]@{}
 Get-ChildItem -LiteralPath $output -Recurse -Force -File | ForEach-Object {$hashes[$_.FullName.Substring($output.Length+1).Replace('\','/')]=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()}

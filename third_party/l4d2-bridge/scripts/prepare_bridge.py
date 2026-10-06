@@ -16,18 +16,18 @@ def run(*args, cwd=None):
     subprocess.run(args, cwd=cwd, check=True)
 
 
-def prepare(source):
+def prepare(source, commit=COMMIT):
     if not source.exists():
         source.parent.mkdir(parents=True, exist_ok=True)
         run("git", "init", str(source))
         run("git", "config", "core.autocrlf", "false", cwd=source)
         run("git", "remote", "add", "origin", REMOTE, cwd=source)
-        run("git", "fetch", "--depth=1", "origin", COMMIT, cwd=source)
+        run("git", "fetch", "--depth=1", "origin", commit, cwd=source)
         run("git", "checkout", "--detach", "FETCH_HEAD", cwd=source)
     head = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=source, text=True).strip()
-    if head != COMMIT:
-        raise RuntimeError(f"Expected upstream {COMMIT}, found {head}; checkout preserved")
+    if head != commit:
+        raise RuntimeError(f"Expected upstream {commit}, found {head}; checkout preserved")
     patch = ROOT / "patches" / "l4d2-bridge.patch"
     already_applied = subprocess.run(
         ["git", "apply", "--reverse", "--check", str(patch)],
@@ -45,4 +45,6 @@ def prepare(source):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, default=ROOT / ".deps" / "dxvk-remix")
-    prepare(parser.parse_args().source.resolve())
+    parser.add_argument("--commit", default=COMMIT)
+    args = parser.parse_args()
+    prepare(args.source.resolve(), args.commit)

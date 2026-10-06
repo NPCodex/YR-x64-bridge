@@ -9,7 +9,7 @@
 ## NVIDIA RTX Remix Bridge
 
 - 来源：https://github.com/NVIDIAGameWorks/dxvk-remix
-- 固定提交：`9aa74f8dfad2188efbd0f717c64d9f8fa909787e`。
+- 原项目基准提交：`9aa74f8dfad2188efbd0f717c64d9f8fa909787e`；Nightly 跟随上游默认分支，实际构建提交见对应 Release 说明。
 - Copyright 2022–2024 NVIDIA CORPORATION & AFFILIATES，以及各文件声明的权利人。
 - 使用范围：Bridge 子项目及其依赖，不构建或分发 RTX 渲染器。
 - Bridge MIT 原文：[licenses/Bridge-MIT.txt](licenses/Bridge-MIT.txt)。
@@ -19,12 +19,10 @@
 ## DXVK
 
 - 来源：https://github.com/doitsujin/dxvk
-- v1.1 完整包随附官方 v2.6.1 的 x32/x64 `d3d9.dll`，分别仅改名为 `d3d9vk_x86.dll` / `d3d9vk_x64.dll`，不修改这些 DLL。用户也可按 GPU/驱动兼容性自行选择匹配位数的其他官方版本。
+- 第一版默认随包使用官方 v2.6.1 的 x64 `d3d9.dll`，仅改名为 `d3d9vk_x64.dll`，不修改该 DLL。
 - 原版权归 Philip Rebohle、Joshua Ashton、Robin Kertels、Jeffrey Ellison 及对应贡献者。
 - zlib/libpng 许可原文：[licenses/DXVK-LICENSE.txt](licenses/DXVK-LICENSE.txt)。
 - 发布归档 SHA-256：`7ee0bef415910c943d3bda47d9d6821b9c8ca7a74f1e9f6151707d268cf3ce7f`，CI 在解压前检查。
-
-从 1.0.1 延续至 v1.1 的可选 [DXVK 内存修复 mem1](docs/DXVK-MEMORY-EXPERIMENT.md) 是基于官方 v2.6.1 提交 `2b1a284f8453baa2bd193709b67e5183074c74ba` 的明确标识修改版，通过独立补丁构建，不替换完整包的官方默认后端。原 DXVK 继续遵循其 zlib/libpng 许可；本项目新增实现遵循根目录 MIT 许可及上述生成来源声明。独立后端更新包保存上游源提交与原许可证，并保留 libdisplay-info Contributors 的 MIT、Khronos SPIRV-Headers 原许可、Vulkan-Headers 各文件的 Apache-2.0／MIT 声明、Valve Corporation 的 OpenVR BSD-3-Clause、Steve Reid 的 SHA-1 Public Domain 声明、MinGW 头文件和编译器运行库的原通知；具体源地址、固定提交和原文见包内 `UPSTREAM-SOURCES.json`、`licenses/`。其中 source checkout 的部分头文件供其他平台使用，不表示全部编入该 Windows DLL。Vulkan-Headers 的 [原始声明](https://github.com/KhronosGroup/Vulkan-Headers/blob/234c4b7370a8ea3239a214c9e871e4b17c89f4ab/LICENSE.md) 按文件适用不同条款，其中核心 C 头文件为 Apache-2.0，部分 C++ 文件允许 Apache-2.0 OR MIT，不归属本项目原创。
 
 ## Microsoft Detours
 
@@ -48,9 +46,10 @@ TXVK 自身的 [LICENSE](https://github.com/tianxiaols/TXVK/blob/main/LICENSE) �
 
 L4D2 与 Steam 属于 Valve，游戏及平台不包含在本项目的授权范围内。显卡驱动亦遵循各厂商自己的许可。
 
-## ReShade 接口参考
+## DXVK-GPLALL 后端变体
 
-- 来源：https://github.com/crosire/reshade/tree/v6.0.1
-- 作者：Patrick Mours；SDK 标注 `Copyright (C) 2021 Patrick Mours`、`BSD-3-Clause OR MIT`。
-- 使用范围：核对输入窗口所有权检查及 API 10 的公开插件 ABI、overlay 事件编号与签名。只新增独立的动态接口绑定，不复制或分发 SDK 实现、头文件或 ReShade DLL；不把 ReShade 代码归为本项目原创。
-- 窗口/输入方案还参考 TXVK 固定提交 `7d466d794926ce26c113d810172c2abc37058319` 的公开说明与二进制静态分析，参考范围与上文归属一致。
+- 来源：https://github.com/Digger1955/dxvk-gplall/releases/tag/DXVK-GPLALL-2.6.8-2 。
+- 使用 GCC-WinMacLinux-SSE2-O3-LTO 发布包中的 x64/d3d9.dll，仅重命名，不修改二进制。
+- 归属 Digger1955、上游 DXVK 和原文件所列贡献者；保留原始 [LICENSE](licenses/DXVK-GPLALL-LICENSE.txt)。
+- 下载地址和 SHA-256 固定在 config/backend.json，构建目录记录 BACKEND.json 和 DLL 校验值；精简 Release 安装包不包含这些开发元数据，归档校验值由附件 .sha256 提供。
+- 原版实测结果不能视作该变体已经通过验证。

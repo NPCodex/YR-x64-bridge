@@ -1,15 +1,11 @@
 # Third-party attribution
 
-| Component | Source / version | License |
-| --- | --- | --- |
-| L4D2 Bridge adaptations | yeyunyyds/L4D2_Dxvk_32to64_Bridge, v1.1.0; source snapshot 6c6dc09d7b1053f304ff6d7b353edadb46d6ca78 | MIT, original Copyright (c) 2026 yeyunyyds retained |
-| NVIDIA RTX Remix Bridge foundation | NVIDIAGameWorks/dxvk-remix, 9aa74f8dfad2188efbd0f717c64d9f8fa909787e | Bridge MIT and bundled third-party notices |
-| Official DXVK D3D9 backend | doitsujin/dxvk, v2.6.1, unmodified | zlib/libpng |
+Nightly client and matching Host are compiled from NVIDIA dxvk-remix with the MIT L4D2 adaptation patch vendored from YuuMJ/L4D2_Dxvk_32to64_Bridge-Nightlybuild, recipe snapshot 030c3b6dde55bf288c7c47fe84381c1569ef995e. Original yeyunyyds copyright notices remain intact.
 
-This project adds YR/MO configuration and packaging. The shipped client and Host are upstream published binaries, not newly compiled or claimed as original work. Their L4D2 names are retained to preserve the loading protocol. The exact dependency URLs, source revisions and archive hashes are in dependencies.json. Package file hashes are in SHA256.json.
+Nightly backend: unmodified DXVK-GPLALL 2.6.8-2 x64, GCC SSE2 O3 LTO, zlib/libpng license. Download URL and archive SHA256 are fixed in config/backend.json. Published Nightly archives record UPSTREAM.json, BACKEND.json and SHA256.json.
 
-The full L4D2 adaptation patch, preparation/build scripts and tests are retained under third_party/l4d2-bridge. Its prepare_bridge.py fetches the pinned NVIDIA foundation and Detours dependency; it does not fetch the RTX renderer. All notices in licenses/ must accompany binary redistribution. Additional upstream references, credits and license boundaries remain in third_party/l4d2-bridge/THIRD_PARTY.md.
+NVIDIA Bridge MIT and bundled third-party notices, DXVK and GPLALL notices must accompany redistribution. See licenses and third_party/l4d2-bridge/THIRD_PARTY.md. This builds only Bridge, not the RTX Remix path-tracing renderer.
 
-Nightly reference: https://github.com/YuuMJ/L4D2_Dxvk_32to64_Bridge-Nightlybuild. This release does not ship its DXVK-GPLALL backend or Nightly binaries.
+Legacy manual packaging uses L4D2 Bridge v1.1.0 and official DXVK 2.6.1 as pinned in the root dependencies.json. That file describes the legacy channel only.
 
-cnc-ddraw is required separately and is not bundled in this release. Game executables, game resources, Ares, Phobos, Syringe, Steam and other mod files are not distributed.
+Game files, cnc-ddraw, Ares, Phobos, Syringe and Steam are not bundled.
