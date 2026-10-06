@@ -2,7 +2,7 @@
 
 给《尤里的复仇》和心灵终结（Mental Omega）使用的 D3D9 → x64 DXVK 桥接集成包。游戏和游戏逻辑仍是 32 位，渲染后端运行在独立的 64 位进程中。
 
-本项目参考 L4D2 Nightly 的补丁和构建方法，自动编译 NVIDIA dxvk-remix main 的最新 Bridge，并搭配固定的 DXVK-GPLALL 2.6.8-2 x64 后端。它不是重新编译的 64 位游戏引擎，也不包含游戏文件。
+本项目参考 L4D2 Nightly 的补丁和构建方法，保留已验证的完整 v1.1 适配补丁，自动编译 NVIDIA dxvk-remix main 的最新 Bridge，并搭配固定的 DXVK-GPLALL 2.6.8-2 x64 后端。它不是重新编译的 64 位游戏引擎，也不包含游戏文件。
 
 ## 安装
 
@@ -45,7 +45,7 @@
 手动执行 Run workflow 时，upstream_commit 留空跟随 main，或填写完整 40 位 SHA。force_rebuild 可重建已有版本。
 使用仓库自带 GITHUB_TOKEN，无需个人令牌。发布任务具备 contents:write 权限。
 
-config/backend.json 固定 GPLALL 2.6.8-2 的下载地址和 SHA256。后端不会自动升级；更新该文件后，其指纹会参与发布标签，即使 Bridge 没变化也能生成新包。
+config/backend.json 固定 GPLALL 2.6.8-2 的下载地址和 SHA256。后端不会自动升级；更新该文件后，它与 Bridge 适配补丁的指纹会参与发布标签，即使 Bridge 没变化也能生成新包。
 补丁冲突、编译、诊断或校验失败时不发布。游戏兼容性仍需实测。
 
 本地源码构建需要 Windows、Python 3.11、Git、VS C++ x86/x64 工具链及 Windows SDK：

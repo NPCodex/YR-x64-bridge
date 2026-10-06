@@ -8,7 +8,7 @@ if ref!='main' and not re.fullmatch('[0-9a-fA-F]{40}',ref):raise ValueError('Use
 info=api('repos/NVIDIAGameWorks/dxvk-remix/commits/'+ref)
 commit=info['sha']
 backend=json.loads(Path('config/backend.json').read_text(encoding='utf-8-sig'))
-fingerprint=hashlib.sha256(Path('config/backend.json').read_bytes()).hexdigest()[:8]
+fingerprint=hashlib.sha256(Path('config/backend.json').read_bytes()+Path('third_party/l4d2-bridge/patches/l4d2-bridge.patch').read_bytes()).hexdigest()[:8]
 tag='nightly-'+info['commit']['committer']['date'][:10].replace('-','')+'-'+commit[:8]+'-gplall-'+backend['version']+'-'+fingerprint
 pending=True
 if os.environ.get('FORCE_REBUILD','false').lower()!='true':
