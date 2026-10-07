@@ -163,6 +163,26 @@ void testCounters() {
     s.fullWaits == 2000 && s.fullWaitMs == 18000 && s.maxFullWaitMs == 11,
     "concurrent queue counters lost updates");
 }
+void testFullProducer() {
+  const auto name = uniqueName();
+  Memory memory(name);
+  Writer writer(name, memory.data, kMapSize, kQueueSize);
+  Reader reader(name, memory.data, kMapSize, kQueueSize);
+  for (uint32_t i = 0; i < kQueueSize - 1; ++i) { require(writer.push(Item{}) == Result::Success, "fill failed"); }
+  std::promise<void> started;
+  auto task = std::async(std::launch::async, [&] {
+    const auto before = threadCpu();
+    started.set_value();
+    require(writer.push(Item{}) == Result::Success, "full producer did not wake");
+    return threadCpu() - before;
+  });
+  started.get_future().wait();
+  Sleep(300);
+  Result result = Result::Failure;
+  reader.pull(result, 1000);
+  require(result == Result::Success, "consumer did not release space");
+  require(task.get() < 1000000, "full producer used over 100 ms CPU");
+}
 void testWakeAndWrap() {
   const auto name = uniqueName();
   Memory memory(name);
@@ -225,6 +245,7 @@ void testPeer(const std::wstring& executable) {
   CloseHandle(process.hProcess);
 }
 int wmain(int argc, wchar_t** argv) {
+  yr_perf::waitForSpace.store(true);
   try {
     if (argc == 3 && std::wstring(argv[1]) == L"--reader") {
       const std::wstring wideName = argv[2];
@@ -240,7 +261,8 @@ int wmain(int argc, wchar_t** argv) {
       testTimeoutAndCompatibility();
       testNotificationCoalescing();
       testCounters();
-      testWakeAndWrap();
+      testFullProducer();
+    testWakeAndWrap();
       testPeer(argv[1]);
       std::puts("Command queue tests passed");
     }

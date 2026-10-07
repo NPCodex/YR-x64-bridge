@@ -4,3 +4,6 @@
 /third_party/l4d2-bridge/dist/
 *.log
 *.dmp
+
+__pycache__/
+/regression-results/
