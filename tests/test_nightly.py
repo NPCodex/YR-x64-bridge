@@ -4,9 +4,16 @@ spec=importlib.util.spec_from_file_location('detect',Path(__file__).parents[1]/'
 detect=importlib.util.module_from_spec(spec);spec.loader.exec_module(detect)
 class NightlyTests(unittest.TestCase):
     def test_version_sequence(self):
-        self.assertEqual(detect.version_from_distance("1.0",1),"1.0")
-        self.assertEqual(detect.version_from_distance("1.0",2),"1.1")
-        self.assertEqual(detect.version_from_distance("1.0",12),"1.11")
+        initial=['release: v1.0']
+        self.assertEqual(detect.version_from_messages('1.0',initial),'1.0')
+        history=initial+['fix: first','docs: guide']
+        self.assertEqual(detect.version_from_messages('1.0',history),'1.0.2')
+        history+=['feat: new rendering feature','fix: compatibility']
+        self.assertEqual(detect.version_from_messages('1.0',history),'1.1.1')
+        history+=['refactor: major improvement\n\nRelease-Level: minor']
+        self.assertEqual(detect.version_from_messages('1.0',history),'1.2')
+    def test_explicit_release_level(self):
+        self.assertEqual(detect.version_from_messages('1.0',['initial','feat: tiny option\nRelease-Level: patch']),'1.0.1')
     def test_complete_pair(self):
         name='YR-MO-DXVK64-Bridge-vtest.zip'
         release={'draft':False,'assets':[{'name':name,'size':3},{'name':name+'.sha256','size':70}]}

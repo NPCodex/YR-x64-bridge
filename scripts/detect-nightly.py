@@ -19,14 +19,23 @@ def release_complete(release,tag):
     assets={a['name']:a for a in release.get('assets',[])}
     return not release.get('draft',True) and all(assets.get(n,{}).get('size',0)>0 for n in [name,name+'.sha256'])
 
-def version_from_distance(base,distance):
-    major,minor=map(int,base.split('.'))
-    return str(major)+'.'+str(minor+max(0,distance-1))
+def version_from_messages(base,messages):
+    parts=list(map(int,base.split('.')))
+    major,minor=parts[:2]
+    patch=parts[2] if len(parts)>2 else 0
+    for message in messages[1:]:
+        explicit=re.search(r'^Release-Level:\s*(major|minor|patch)\s*$',message,re.MULTILINE|re.IGNORECASE)
+        level=explicit.group(1).lower() if explicit else ('minor' if re.match(r'feat(?:\([^)]*\))?:',message.strip()) else 'patch')
+        if level=='major':major+=1;minor=patch=0
+        elif level=='minor':minor+=1;patch=0
+        else:patch+=1
+    return str(major)+'.'+str(minor)+(('.'+str(patch)) if patch else '')
 
 def source_version(root):
     settings=json.loads((root/'state/versioning.json').read_text())
-    distance=int(subprocess.check_output(['git','rev-list','--count',settings['anchor_commit']+'..HEAD'],cwd=root,text=True))
-    return version_from_distance(settings['base_version'],distance)
+    history=subprocess.check_output(['git','log','--reverse','--format=%B%x1e',settings['anchor_commit']+'..HEAD'],cwd=root,text=True,encoding='utf-8')
+    messages=[m.strip() for m in history.split('\x1e') if m.strip()]
+    return version_from_messages(settings['base_version'],messages)
 
 def main():
     ref=os.environ.get('UPSTREAM_COMMIT','').strip() or 'main'

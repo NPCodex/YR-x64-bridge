@@ -66,4 +66,6 @@ pwsh -File scripts/build-from-source.ps1 -UpstreamCommit <完整提交SHA>
 
 运行目录为 `.yrbridge`，Host 为 `YRBridge64.exe`。客户端和Host必须一起更新，仅重命名旧目录不够。备份后安装新包；两份配置中的资源数据库路径改为 `.yrbridge/resource-retention.db`。如需沿用数据库，退出游戏后将旧目录的数据库复制到新目录。旧目录可留作回退。
 
-本次命名提交发布 v1.0，随后 main 的提交按提交计数生成 v1.1、v1.2 等；多个提交一次推送可能跳过中间发布号。VERSION 是基础版本，发布包 VERSION 按构建提交生成。state/versioning.json 固定版本起点，不要重写起点之后的提交历史。main push 自动构建发布，定时上游构建使用当前版本加 nightly 后缀。
+本次命名提交发布 v1.0，随后 main 的重大功能提交生成 v1.1、v1.2 等，小修复生成 v1.0.1、v1.0.2 或 v1.1.1、v1.1.2 等；多个提交一次推送可能跳过中间发布号。VERSION 是基础版本，发布包 VERSION 按构建提交生成。state/versioning.json 固定版本起点，不要重写起点之后的提交历史。main push 自动构建发布，定时上游构建使用当前版本加 nightly 后缀。
+
+提交末尾可写 `Release-Level: minor` 表示重大更新，`Release-Level: patch` 表示小修复，`Release-Level: major` 表示大版本变化。没有标记时 feat: 提交提升次版本，其余提交提升修复号。升级次版本后修复号归零。提交消息参与版本计算，不需要机器人额外提交。
