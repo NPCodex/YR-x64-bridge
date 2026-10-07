@@ -18,6 +18,10 @@ function Invoke-Checked {
 }
 Invoke-Checked 'python' @("$PSScriptRoot/prepare_bridge.py", "--commit", $UpstreamCommit)
 $source = Join-Path $repoRoot '.deps/dxvk-remix'
+$yrVersion=(Get-Content -LiteralPath (Join-Path $repoRoot 'VERSION') -Raw).Trim()
+if($yrVersion -notmatch '^[0-9A-Za-z_.-]+$'){throw 'Invalid YR version'}
+$versionHeader='#pragma once' + "`n" + '#define YR_BRIDGE_VERSION "' + $yrVersion + '"' + "`n"
+[IO.File]::WriteAllText((Join-Path $source 'bridge/src/util/yr_version.h'),$versionHeader,[Text.Encoding]::ASCII)
 Push-Location (Join-Path $source 'bridge')
 try {
   # Each architecture gets a fresh PowerShell process and its own MSVC environment.
