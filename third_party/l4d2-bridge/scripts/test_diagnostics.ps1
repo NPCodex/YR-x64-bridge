@@ -27,7 +27,7 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Texture creation failure test compilation failed' }
   & ./texture-creation-test.exe
   if ($LASTEXITCODE -ne 0) { throw "Texture creation failure test failed: $LASTEXITCODE" }
-  foreach($testName in @('ati_texture_layout','readback_layout')) {
+  foreach($testName in @('ati_texture_layout','readback_layout','bridge_performance')) {
     & cl.exe /nologo /std:c++17 /EHsc /W4 /WX "/I$source/bridge/src/util" "$repoRoot/tests/$testName.cpp" "/Fe:$testName.exe"
     if($LASTEXITCODE -ne 0){throw "$testName compilation failed"}
     & "./$testName.exe"
