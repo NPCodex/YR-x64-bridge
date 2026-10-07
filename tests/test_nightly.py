@@ -3,6 +3,10 @@ from pathlib import Path
 spec=importlib.util.spec_from_file_location('detect',Path(__file__).parents[1]/'scripts/detect-nightly.py')
 detect=importlib.util.module_from_spec(spec);spec.loader.exec_module(detect)
 class NightlyTests(unittest.TestCase):
+    def test_version_sequence(self):
+        self.assertEqual(detect.version_from_distance("1.0",1),"1.0")
+        self.assertEqual(detect.version_from_distance("1.0",2),"1.1")
+        self.assertEqual(detect.version_from_distance("1.0",12),"1.11")
     def test_complete_pair(self):
         name='YR-MO-DXVK64-Bridge-vtest.zip'
         release={'draft':False,'assets':[{'name':name,'size':3},{'name':name+'.sha256','size':70}]}

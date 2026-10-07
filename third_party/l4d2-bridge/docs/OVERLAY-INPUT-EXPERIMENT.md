@@ -4,9 +4,9 @@
 
 ## 安装与启用
 
-1. 完全退出游戏与桥，备份当前 `bin/dxvk_d3d9.dll` 和 `bin/.l4d2bridge/L4D2Bridge64.exe`。
+1. 完全退出游戏与桥，备份当前 `bin/dxvk_d3d9.dll` 和 `bin/.yrbridge/YRBridge64.exe`。
 2. 将实验包的 `bin` 合并到游戏根目录。包内不含 DXVK 后端和正式 `bridge.conf`，保留当前 `d3d9vk_x64.dll`、ReShade、retention DB 和策略设置。游戏根目录现有的 `d3d9.dll` 加载器保持现状。
-3. 将 `OVERLAY-INPUT.conf` 的设置合并到 `bin/.l4d2bridge/bridge.conf`，同名键保留一份：
+3. 将 `OVERLAY-INPUT.conf` 的设置合并到 `bin/.yrbridge/bridge.conf`，同名键保留一份：
 
 ```ini
 server.presenterWindow = True
@@ -49,7 +49,7 @@ ReShade 参考：https://github.com/crosire/reshade/tree/v6.0.1 。作者 Patric
 
 The v1.1 optional, hardware-confirmed Home fix gives the Bridge a server-owned child presentation window. ReShade 6.0.1 rejects input registration for windows owned by another process; the original game-owned HWND crosses this boundary. CreateDevice, Reset, additional swapchains and non-null Present overrides now consistently target the host-owned child in windowed vanilla-DXVK mode.
 
-Merge the supplied `bin` folder into the game directory after backing up the client and host. Preserve your installed DXVK backend, ReShade, retention database and policy. Merge the settings above into `bin/.l4d2bridge/bridge.conf`, removing duplicate keys. Test Home, overlay mouse interaction, closing the overlay, entering/leaving a map, Alt+Tab and resizing. Steam Shift+Tab is a known unsupported limitation, not a passed validation item. Submit `bridge64.log` and `ReShade.log`; profiling other processes is unnecessary.
+Merge the supplied `bin` folder into the game directory after backing up the client and host. Preserve your installed DXVK backend, ReShade, retention database and policy. Merge the settings above into `bin/.yrbridge/bridge.conf`, removing duplicate keys. Test Home, overlay mouse interaction, closing the overlay, entering/leaving a map, Alt+Tab and resizing. Steam Shift+Tab is a known unsupported limitation, not a passed validation item. Submit `bridge64.log` and `ReShade.log`; profiling other processes is unnecessary.
 
 Keyboard forwarding is limited to the foreground game and does not record keys. ReShade's public API 10 overlay event controls capture; registration failure is logged. The optional Home fallback estimates state and requires closing via Home. Other add-ons can veto the observed event. Disable `server.presenterWindow` and restore the previous input settings to roll back.
 

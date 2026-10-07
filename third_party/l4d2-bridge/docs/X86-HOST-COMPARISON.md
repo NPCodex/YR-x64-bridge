@@ -6,7 +6,7 @@
 
 ## 安装与切换
 
-先完全退出游戏和桥，备份目前的 `bin/dxvk_d3d9.dll` 以及整个 `bin/.l4d2bridge` 文件夹。将本包的 `bin` 合并到游戏安装目录的 `bin`，保留现有配置和根目录 DLL 启动链。本包不覆盖 `bridge.conf`。
+先完全退出游戏和桥，备份目前的 `bin/dxvk_d3d9.dll` 以及整个 `bin/.yrbridge` 文件夹。将本包的 `bin` 合并到游戏安装目录的 `bin`，保留现有配置和根目录 DLL 启动链。本包不覆盖 `bridge.conf`。
 
 文件布局：
 
@@ -14,17 +14,17 @@
 Left 4 Dead 2/
 └─ bin/
    ├─ dxvk_d3d9.dll                     # 同一份 32 位桥客户端
-   └─ .l4d2bridge/
+   └─ .yrbridge/
       ├─ bridge.conf                   # 现有配置，手动合并下面的片段
-      ├─ L4D2Bridge32.exe               # 新编译的 32 位 SERVER
-      ├─ L4D2Bridge64.exe               # 同提交的 64 位 SERVER
+      ├─ YRBridge32.exe               # 新编译的 32 位 SERVER
+      ├─ YRBridge64.exe               # 同提交的 64 位 SERVER
       ├─ d3d9vk_x86.dll                 # 官方 DXVK 2.6.1 x32/d3d9.dll
       └─ d3d9vk_x64.dll                 # 官方 DXVK 2.6.1 x64/d3d9.dll
 ```
 
 本包自带的两个 DXVK DLL 来自同一官方归档，均未修改。若当前使用 mem1 或其他定制后端，先备份，再使用本包的两个官方 DLL 完成这一轮对照。不要将游戏客户端 DLL 当作后端 DLL，也不要只给 64 位 EXE 改名。
 
-把 `X86-HOST.conf` 中的配置合并到 `bin/.l4d2bridge/bridge.conf`，同名键只保留一个有效值：
+把 `X86-HOST.conf` 中的配置合并到 `bin/.yrbridge/bridge.conf`，同名键只保留一个有效值：
 
 ```ini
 server.useVanillaDxvk = True
@@ -35,7 +35,7 @@ client.pageBlockRetentionPolicy = keep
 client.testReadbackRecovery = False
 ```
 
-从 Steam 正常启动游戏，桥客户端会自动启动 `L4D2Bridge32.exe`。`forceX64Server` 在此用于保持既有运行目录选择；实验开关选择实际的服务器 EXE。不要单独双击桥服务器。
+从 Steam 正常启动游戏，桥客户端会自动启动 `YRBridge32.exe`。`forceX64Server` 在此用于保持既有运行目录选择；实验开关选择实际的服务器 EXE。不要单独双击桥服务器。
 
 64 位对照只把 `client.testX86Server` 改为 `False`，其余片段相同（见 `X64-HOST.conf`），完全退出后重新启动。两轮均使用 `keep`，避免 learned-aggressive 和已学习 DB 对架构对照引入额外变量。现有 DB 无需删除。测试结束后可恢复备份，或者将开关保持 `False` 继续使用同提交的 64 位服务器。
 
@@ -43,13 +43,13 @@ client.testReadbackRecovery = False
 
 32 位运行应同时满足：
 
-- 任务管理器中的服务器进程名为 `L4D2Bridge32.exe`。
+- 任务管理器中的服务器进程名为 `YRBridge32.exe`。
 - 桥日志 `bridge-host32.log` 显示 `Running in x86 mode!`，后端加载路径为 `d3d9vk_x86.dll`。
-- DXVK 后端日志名为 `L4D2Bridge32_d3d9.log`，应显示 DXVK 2.6.1 和 x86 构建信息。
+- DXVK 后端日志名为 `YRBridge32_d3d9.log`，应显示 DXVK 2.6.1 和 x86 构建信息。
 
-64 位服务器名为 `L4D2Bridge64.exe`，桥日志为 `bridge64.log`，后端路径为 `d3d9vk_x64.dll`。客户端日志仍是 `bridge32.log`，不是 32 位服务器日志。
+64 位服务器名为 `YRBridge64.exe`，桥日志为 `bridge64.log`，后端路径为 `d3d9vk_x64.dll`。客户端日志仍是 `bridge32.log`，不是 32 位服务器日志。
 
-Host 内存日志仍位于 `bin/.l4d2bridge/l4d2-host-memory.log`，游戏客户端内存日志为 `bin/l4d2-memory.log`。桥普通日志和 DXVK 日志可能受现有日志目录设置影响，可在游戏目录搜索上述文件名。
+Host 内存日志仍位于 `bin/.yrbridge/l4d2-host-memory.log`，游戏客户端内存日志为 `bin/l4d2-memory.log`。桥普通日志和 DXVK 日志可能受现有日志目录设置影响，可在游戏目录搜索上述文件名。
 
 ## 最小对照步骤
 
@@ -98,11 +98,11 @@ CI 构建实际 x86 / x64 服务器，校验每个 EXE / DLL 的 PE 架构与 x8
 
 The x86 Host is a hardware-tested optional v1.1 mode; ordinary setup is in the [README](../README.md), with measured results in [validation](V1.1-VALIDATION.md). The following preserves the historical comparison-package methodology, including KEEP for controlled comparisons. This package compares an x86 host with official x86 DXVK 2.6.1 against an x64 host with official x64 DXVK 2.6.1, using the same x86 bridge client and command forwarding logic. The current author-reported x86 learned-aggressive result is approximately 16.7 GB total system RAM versus 16.5 GB without Bridge, not a fixed overhead guarantee.
 
-Close the game and hosts, back up `bin/dxvk_d3d9.dll` and `bin/.l4d2bridge`, then merge the package's `bin` directory into the game installation. The package preserves your existing `bridge.conf`. Both supplied DXVK DLLs are unmodified official files; use them for the comparison instead of mixing the x86 official backend with an x64 customized backend.
+Close the game and hosts, back up `bin/dxvk_d3d9.dll` and `bin/.yrbridge`, then merge the package's `bin` directory into the game installation. The package preserves your existing `bridge.conf`. Both supplied DXVK DLLs are unmodified official files; use them for the comparison instead of mixing the x86 official backend with an x64 customized backend.
 
-Merge `X86-HOST.conf` into `bin/.l4d2bridge/bridge.conf`, with only one value per key. Launch the game normally through Steam. `client.testX86Server = True` selects `L4D2Bridge32.exe` and `d3d9vk_x86.dll`; `False` selects `L4D2Bridge64.exe` and `d3d9vk_x64.dll`. Keep all other comparison settings equal, including `client.pageBlockRetentionPolicy = keep` and `client.testReadbackRecovery = False`. Preserve the existing retention DB. Do not manually launch the host.
+Merge `X86-HOST.conf` into `bin/.yrbridge/bridge.conf`, with only one value per key. Launch the game normally through Steam. `client.testX86Server = True` selects `YRBridge32.exe` and `d3d9vk_x86.dll`; `False` selects `YRBridge64.exe` and `d3d9vk_x64.dll`. Keep all other comparison settings equal, including `client.pageBlockRetentionPolicy = keep` and `client.testReadbackRecovery = False`. Preserve the existing retention DB. Do not manually launch the host.
 
-Check the x86 host process name and `bridge-host32.log` for x86 mode and the x86 backend path. Its DXVK log is `L4D2Bridge32_d3d9.log`. The x64 host uses `bridge64.log` and `L4D2Bridge64_d3d9.log`. `bridge32.log` always refers to the game-side client. Memory logs are `bin/l4d2-memory.log` and `bin/.l4d2bridge/l4d2-host-memory.log`.
+Check the x86 host process name and `bridge-host32.log` for x86 mode and the x86 backend path. Its DXVK log is `YRBridge32_d3d9.log`. The x64 host uses `bridge64.log` and `YRBridge64_d3d9.log`. `bridge32.log` always refers to the game-side client. Memory logs are `bin/l4d2-memory.log` and `bin/.yrbridge/l4d2-host-memory.log`.
 
 Use the same map, mods, graphics settings, FPS limit and background applications. Play with the game window active for two minutes after loading, record stable game/host memory and optional DXVK Sysmem HUD statistics, return to the menu for two minutes, then exit normally. Save the logs into separate x86/x64 folders before starting the other run. Working set, private bytes and WDDM usage overlap and must not be added together. Preserve failure logs if the x86 host cannot load the map. Its LARGEADDRESSAWARE executable is still limited to at most 4 GiB of user address space on 64-bit Windows.
 

@@ -5,8 +5,8 @@ import shutil
 import tempfile
 from archive_release import archive
 
-REQUIRED = ("bin/dxvk_d3d9.dll", "bin/.l4d2bridge/L4D2Bridge64.exe",
-            "bin/.l4d2bridge/d3d9vk_x64.dll", "bin/.l4d2bridge/bridge.conf",
+REQUIRED = ("bin/dxvk_d3d9.dll", "bin/.yrbridge/YRBridge64.exe",
+            "bin/.yrbridge/d3d9vk_x64.dll", "bin/.yrbridge/bridge.conf",
             "LICENSE", "THIRD_PARTY.md")
 
 def runtime_archive(source, output):
@@ -24,7 +24,7 @@ def runtime_archive(source, output):
             shutil.copy2(source / name, destination)
         (stage / "README.txt").write_text(
             "L4D2 Bridge Nightly\n\n"
-            "安装：退出游戏，将本包 bin 文件夹合并到游戏根目录的 bin 文件夹，保留 .l4d2bridge 目录结构。覆盖前备份原文件。\n"
+            "安装：退出游戏，将本包 bin 文件夹合并到游戏根目录的 bin 文件夹，保留 .yrbridge 目录结构。覆盖前备份原文件。\n"
             "卸载：移除本包安装的文件，并恢复备份。\n\n"
             "版本、上游提交及构建记录：\n"
             "https://github.com/YuuMJ/L4D2_Dxvk_32to64_Bridge-Nightlybuild/releases\n"

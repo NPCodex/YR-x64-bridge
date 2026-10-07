@@ -4,9 +4,9 @@
 
 ## 安装与恢复
 
-1. 完全退出游戏和 `L4D2Bridge64.exe`，备份原 `bin/.l4d2bridge/L4D2Bridge64.exe`。
+1. 完全退出游戏和 `YRBridge64.exe`，备份原 `bin/.yrbridge/YRBridge64.exe`。
 2. 从 `l4d2-bridge-host-diagnostics` 更新包只替换这个 EXE。保留原客户端 DLL、`d3d9vk_x64.dll`、`bridge.conf`、ReShade 配置和着色器。已有 v1.0.0 客户端可以继续使用；新 EXE 不修改握手协议。
-3. 启动游戏，确认生成 `bin/.l4d2bridge/l4d2-host-memory.log`。此文件不依赖逐调用日志开关。需要回退时，退出游戏后恢复备份 EXE。
+3. 启动游戏，确认生成 `bin/.yrbridge/l4d2-host-memory.log`。此文件不依赖逐调用日志开关。需要回退时，退出游戏后恢复备份 EXE。
 
 ## 当前推荐复测：同图往返
 
@@ -27,7 +27,7 @@ CPU 优化与额外纹理缓存暂缓。保持原来的帧率上限、Mod、分�
 - 先限制到 60 FPS，记录约 10 分钟，然后设回 300 FPS 上限，记录相同场景。记录调整帧率的时间，尽量保持分辨率和画质一致。
 - 更换一次地图，观察游戏 AV、Host 内存和资源句柄数是否回落，继续记录约 10 分钟。
 - 如需要比较 ReShade，另起一轮启用 ReShade 的测试；每轮结束后立即保存日志，下一次运行会覆盖文件。
-- 发回四份日志：`bridge32.log`、`bridge64.log`、`bin/l4d2-memory.log`、`bin/.l4d2bridge/l4d2-host-memory.log`。说明地图切换、帧率调整时间和退出方式。
+- 发回四份日志：`bridge32.log`、`bridge64.log`、`bin/l4d2-memory.log`、`bin/.yrbridge/l4d2-host-memory.log`。说明地图切换、帧率调整时间和退出方式。
 
 `l4n` 与服务器冲突若在无桥环境也复现，需与本轮内存变化分别判断；它导致客户端先退出时，Host 列出大量尚存对象不能直接作为桥接资源泄漏的证据。
 
@@ -72,9 +72,9 @@ CPU 优化与额外纹理缓存暂缓。保持原来的帧率上限、Mod、分�
 
 ## English
 
-This is a diagnostic update for v1.0.0, not a memory/performance fix. Exit the game and Host, back up `bin/.l4d2bridge/L4D2Bridge64.exe`, and replace only that executable from the `l4d2-bridge-host-diagnostics` artifact. Keep the client, DXVK, configuration and ReShade files. The existing v1.0.0 client remains compatible. Restore the executable backup to revert.
+This is a diagnostic update for v1.0.0, not a memory/performance fix. Exit the game and Host, back up `bin/.yrbridge/YRBridge64.exe`, and replace only that executable from the `l4d2-bridge-host-diagnostics` artifact. Keep the client, DXVK, configuration and ReShade files. The existing v1.0.0 client remains compatible. Restore the executable backup to revert.
 
-The Host writes `bin/.l4d2bridge/l4d2-host-memory.log`, replacing the previous session. Schema 3 adds per-type resource-handle counts, registration/rebinding/replacement/destruction/unlink totals, committed address-region categories, and native DXGI process-local GPU usage/budgets. GPU queries cover the current Host only, node 0, matching the backend vendor/device; ambiguous identical GPUs or unavailable APIs produce invalid counters. Local/nonlocal usage is not card-wide VRAM or texture payload size. Object entries include aliases, not unique GPU allocations. Address categories are approximate committed virtual regions, not physical residency or allocator ownership.
+The Host writes `bin/.yrbridge/l4d2-host-memory.log`, replacing the previous session. Schema 3 adds per-type resource-handle counts, registration/rebinding/replacement/destruction/unlink totals, committed address-region categories, and native DXGI process-local GPU usage/budgets. GPU queries cover the current Host only, node 0, matching the backend vendor/device; ambiguous identical GPUs or unavailable APIs produce invalid counters. Local/nonlocal usage is not card-wide VRAM or texture payload size. Object entries include aliases, not unique GPU allocations. Address categories are approximate committed virtual regions, not physical residency or allocator ownership.
 
 For the current memory investigation, pause CPU changes and texture pooling. In one process, enter the same map, play for at least 30 seconds, return to the menu and wait five minutes; repeat three or four times and exit normally. Record timestamps, game/Host RAM and dedicated/shared GPU readings at each settled menu. Compare at least two cycles without the bridge under the same conditions. Save all four logs before restarting. Existing four-cycle logs remain useful and should be sent first. Card-wide GPU totals include background applications; shared GPU memory uses system RAM and must not simply be added to process working sets as separate physical usage. No other processes need to be sampled.
 

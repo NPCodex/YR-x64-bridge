@@ -1,4 +1,4 @@
-import hashlib,json,os,re,urllib.request,urllib.error
+import hashlib,json,os,re,subprocess,urllib.request,urllib.error
 from pathlib import Path
 def api(path):
     request=urllib.request.Request('https://api.github.com/'+path,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'User-Agent':'YR-MO-nightly'})
@@ -15,9 +15,18 @@ def recipe_fingerprint(root):
     return digest.hexdigest()[:12]
 
 def release_complete(release,tag):
-    name='YR-MO-DXVK64-Bridge-v'+tag+'.zip'
+    name='YR-MO-DXVK64-Bridge-v'+tag.removeprefix('v')+'.zip'
     assets={a['name']:a for a in release.get('assets',[])}
     return not release.get('draft',True) and all(assets.get(n,{}).get('size',0)>0 for n in [name,name+'.sha256'])
+
+def version_from_distance(base,distance):
+    major,minor=map(int,base.split('.'))
+    return str(major)+'.'+str(minor+max(0,distance-1))
+
+def source_version(root):
+    settings=json.loads((root/'state/versioning.json').read_text())
+    distance=int(subprocess.check_output(['git','rev-list','--count',settings['anchor_commit']+'..HEAD'],cwd=root,text=True))
+    return version_from_distance(settings['base_version'],distance)
 
 def main():
     ref=os.environ.get('UPSTREAM_COMMIT','').strip() or 'main'
@@ -26,7 +35,10 @@ def main():
     commit=info['sha']
     backend=json.loads(Path('config/backend.json').read_text(encoding='utf-8-sig'))
     fingerprint=recipe_fingerprint(Path('.'))
-    tag='nightly-'+info['commit']['committer']['date'][:10].replace('-','')+'-'+commit[:8]+'-gplall-'+backend['version']+'-'+fingerprint
+    version=source_version(Path('.'))
+    tag='v'+version
+    if os.environ.get('GITHUB_EVENT_NAME')=='schedule':
+        tag+='-nightly-'+commit[:8]+'-'+fingerprint
     pending=True
     if os.environ.get('FORCE_REBUILD','false').lower()!='true':
         try:
@@ -35,7 +47,7 @@ def main():
         except urllib.error.HTTPError as error:
             if error.code!=404:raise
     with open(os.environ['GITHUB_OUTPUT'],'a') as output:
-        for key,value in {'commit':commit,'tag':tag,'pending':str(pending).lower()}.items():output.write(key+'='+value+'\n')
+        for key,value in {'commit':commit,'tag':tag,'version':tag.removeprefix('v'),'pending':str(pending).lower()}.items():output.write(key+'='+value+'\n')
     print('Upstream:',commit,'Release:',tag,'Build needed:',pending)
 
 if __name__=='__main__': main()

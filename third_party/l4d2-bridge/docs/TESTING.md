@@ -25,12 +25,12 @@ python -m pip install meson==1.3.2 ninja==1.11.1.1
 
 1. 退出游戏，把完整包的 bin 目录内容复制到游戏 bin。不要与已有 TXVK 或 RTX Remix 桥混装；先保留它们的备份。根目录 d3d9.dll 安装方式的切换步骤见 README。
 2. 游戏启动选项使用 -vulkan -insecure -windowed -console -condebug。保持默认画质、不加载 Mod，进行短时诊断。
-3. 检查 L4D2Bridge64.exe 是否启动，bridge64.log 是否出现 L4D2 backend、D3D9 interface object creation succeeded、L4D2 CreateDevice/result。后端路径应为 bin/.l4d2bridge/d3d9vk_x64.dll。
+3. 检查 YRBridge64.exe 是否启动，bridge64.log 是否出现 L4D2 backend、D3D9 interface object creation succeeded、L4D2 CreateDevice/result。后端路径应为 bin/.yrbridge/d3d9vk_x64.dll。
 4. 按菜单有效画面 → 官方地图 → 切换窗口 → 分辨率变化 → 正常退出的顺序测试。任何失败都保留两侧日志；不要把 Host 存在或设备创建成功当作渲染成功。
 5. 上游默认日志位于游戏工作目录的 rtx-remix/logs/bridge32.log、bridge64.log，DXVK 日志位置看启动输出。若未找到，搜索游戏目录下同名文件；不要预期 TXVK 的 RUN_OK.txt，本实验没有实现它。
 6. 记录显卡/驱动、游戏构建号、分辨率、最后成功步骤及表现。提交两侧日志和 left4dead2/console.log。逐调用日志可能很大，先只跑到菜单。
 
-确认初步运行后，将 bin/.l4d2bridge/bridge.conf 的 logApiCalls、logServerCommands 改为 False，并把 logLevel 改为 Info，再进行性能与地址空间测量。不能用诊断模式的帧率评价最终性能。
+确认初步运行后，将 bin/.yrbridge/bridge.conf 的 logApiCalls、logServerCommands 改为 False，并把 logLevel 改为 Info，再进行性能与地址空间测量。不能用诊断模式的帧率评价最终性能。
 
 ## 已知未解决项
 

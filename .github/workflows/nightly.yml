@@ -1,5 +1,7 @@
 name: Build YR MO Nightly
 on:
+  push:
+    branches: [main]
   schedule:
     - cron: '23 * * * *'
   workflow_dispatch:
@@ -23,9 +25,12 @@ jobs:
     outputs:
       commit: ${{ steps.detect.outputs.commit }}
       tag: ${{ steps.detect.outputs.tag }}
+      version: ${{ steps.detect.outputs.version }}
       pending: ${{ steps.detect.outputs.pending }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -54,9 +59,10 @@ jobs:
         shell: pwsh
         env:
           UPSTREAM_COMMIT: ${{ needs.detect.outputs.commit }}
-          NIGHTLY_TAG: ${{ needs.detect.outputs.tag }}
+          NIGHTLY_TAG: ${{ needs.detect.outputs.version }}
         run: |
           $env:NIGHTLY_TAG | Set-Content VERSION -Encoding utf8
+          $env:NIGHTLY_TAG | Set-Content third_party/l4d2-bridge/VERSION -Encoding ascii
           ./scripts/build-from-source.ps1 -UpstreamCommit $env:UPSTREAM_COMMIT
       - uses: actions/upload-artifact@v4
         with:
@@ -88,8 +94,10 @@ jobs:
           from pathlib import Path
           Path('notes.md').write_text('YR/MO Nightly\n\nNVIDIA commit: '+os.environ['UPSTREAM_COMMIT']+'\nRecipe commit: '+os.environ['RECIPE_COMMIT']+'\n\nx86 d3d9.dll, matching x64 Host, pinned GPLALL backend. Extract to game root. Compilation and diagnostics passed; game validation pending.\n')
           PY
+          flags=()
+          if [[ "$TAG" == *-nightly-* ]]; then flags+=(--prerelease); fi
           if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --target "$RECIPE_COMMIT" --title "$TAG" --notes-file notes.md --prerelease --draft
+            gh release create "$TAG" --target "$RECIPE_COMMIT" --title "$TAG" --notes-file notes.md "${flags[@]}" --draft
           fi
           gh release upload "$TAG" assets/* --clobber
-          gh release edit "$TAG" --draft=false --prerelease --notes-file notes.md
+          gh release edit "$TAG" --draft=false --prerelease=false "${flags[@]}" --notes-file notes.md

@@ -6,7 +6,7 @@
 
 ## 安装
 
-1. 将 Release ZIP 的内容中的 `d3d9.dll` 和 `.l4d2bridge` 文件夹直接解压到游戏根目录，与 `gamemd.exe` 同级。
+1. 将 Release ZIP 的内容中的 `d3d9.dll` 和 `.yrbridge` 文件夹直接解压到游戏根目录，与 `gamemd.exe` 同级。
 2. 启动游戏。
 3. 建议把渲染器改为 `cnc-ddraw` 。
 
@@ -20,9 +20,9 @@
 ├── ddraw.ini
 ├── d3d9.dll                    # 本包的 x86 桥接客户端
 ├── bridge.conf
-└── .l4d2bridge/
+└── .yrbridge/
     ├── bridge.conf
-    ├── L4D2Bridge64.exe         # x64 Host，名称沿用上游
+    ├── YRBridge64.exe         # x64 Host，名称沿用上游
     └── d3d9vk_x64.dll           # GPLALL x64 DXVK 后端
 ```
 
@@ -30,7 +30,7 @@
 
 ## 确认生效
 
-应同时出现 `gamemd.exe` 和 `L4D2Bridge64.exe`。`bridge32.log` 显示握手完成，`bridge64.log` 显示 `d3d9vk_x64.dll` 加载及设备创建成功；`L4D2Bridge64_d3d9.log` 显示 DXVK 信息。日志可能在游戏根目录或 `.l4d2bridge`。
+应同时出现 `gamemd.exe` 和 `YRBridge64.exe`。`bridge32.log` 显示握手完成，`bridge64.log` 显示 `d3d9vk_x64.dll` 加载及设备创建成功；`YRBridge64_d3d9.log` 显示 DXVK 信息。日志可能在游戏根目录或 `.yrbridge`。
 
 本机原版 YR 已验证管理员启动、正常菜单和进入地图；用户报告 MO 手动安装链路可用。未进行标准化的长时间、存读档、性能或多机联机测试，不把“能够运行”解释为所有同步问题均已解决。详见 [验证记录](docs/VALIDATION.md)。
 
@@ -56,8 +56,14 @@ pwsh -File scripts/build-from-source.ps1 -UpstreamCommit <完整提交SHA>
 ```
 
 输出 ZIP 的文件直接解压到游戏根目录，无 bin 层，不包含 ddraw.dll。
-旧的 Package verified upstream binaries 工作流保留为手动执行的 v1.1/官方 DXVK 2.6.1 历史打包通道；不要把它当作 Nightly。
+手动打包工作流同样从源码构建 YR 命名的运行文件，不再直接重打包旧 L4D2 二进制。
 
 ## 归属
 
 原作者版权和许可保留于 `licenses/`、`third_party/l4d2-bridge/` 和 [THIRD_PARTY.md](THIRD_PARTY.md)。新增适配、配置及打包代码采用 MIT。详见 [LICENSE](LICENSE)。项目不隶属于 EA、Valve 或 NVIDIA。
+
+## v1.0 命名和版本规则
+
+运行目录为 `.yrbridge`，Host 为 `YRBridge64.exe`。客户端和Host必须一起更新，仅重命名旧目录不够。备份后安装新包；两份配置中的资源数据库路径改为 `.yrbridge/resource-retention.db`。如需沿用数据库，退出游戏后将旧目录的数据库复制到新目录。旧目录可留作回退。
+
+本次命名提交发布 v1.0，随后 main 的提交按提交计数生成 v1.1、v1.2 等；多个提交一次推送可能跳过中间发布号。VERSION 是基础版本，发布包 VERSION 按构建提交生成。state/versioning.json 固定版本起点，不要重写起点之后的提交历史。main push 自动构建发布，定时上游构建使用当前版本加 nightly 后缀。

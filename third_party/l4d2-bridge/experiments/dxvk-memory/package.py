@@ -32,7 +32,7 @@ def package(source, dll, output):
         raise ValueError("Expected plainly marked experimental backend with allocator diagnostics")
     if output.exists():
         raise FileExistsError(f"Preserve the existing output: {output}")
-    destination = output / "bin/.l4d2bridge/d3d9vk_x64.dll"
+    destination = output / "bin/.yrbridge/d3d9vk_x64.dll"
     destination.parent.mkdir(parents=True)
     shutil.copy2(dll, destination)
     shutil.copytree(ROOT / "licenses", output / "licenses")
@@ -85,7 +85,7 @@ def package(source, dll, output):
     shutil.copytree(Path(__file__).parent, output / "source", ignore=shutil.ignore_patterns("__pycache__"))
     (output / "UPSTREAM-SOURCES.json").write_text(json.dumps(sources, indent=2) + "\n")
     (output / "PE-METADATA.json").write_text(json.dumps({"machine": "AMD64", "exports": exports, "imports": imports}, indent=2) + "\n")
-    (output / "SHA256.json").write_text(json.dumps({"bin/.l4d2bridge/d3d9vk_x64.dll": hashlib.sha256(data).hexdigest()}, indent=2) + "\n")
+    (output / "SHA256.json").write_text(json.dumps({"bin/.yrbridge/d3d9vk_x64.dll": hashlib.sha256(data).hexdigest()}, indent=2) + "\n")
     print(f"PASS: x64 D3D9 exports, modified-build markers, static compiler runtimes; {output}")
 
 

@@ -4,7 +4,7 @@
 
 ## 日志证据
 
-本次 bridge32.log 和 bridge64.log 的 GUID 一致。Host 明确运行在 x64 模式，加载 .l4d2bridge/d3d9vk_x64.dll 的普通 DXVK 后端，CreateDevice 返回 0x00000000，1920×1200 窗口模式。23:16:56–23:20:27，约 210 秒，客户端发送 Terminate，Host 正常清理退出。没有记录客户端意外退出、设备创建失败或桥接超时。
+本次 bridge32.log 和 bridge64.log 的 GUID 一致。Host 明确运行在 x64 模式，加载 .yrbridge/d3d9vk_x64.dll 的普通 DXVK 后端，CreateDevice 返回 0x00000000，1920×1200 窗口模式。23:16:56–23:20:27，约 210 秒，客户端发送 Terminate，Host 正常清理退出。没有记录客户端意外退出、设备创建失败或桥接超时。
 
 l4d2-memory.log 包含 42 次采样（23:16:57.903–23:20:23.552），全部 scan_complete=1、counters_valid=1，没有 allocation-failed、section-create-failed 或 section-map-failed。surface_view_budget_bytes 的最大值为 134,217,728 字节，正好 128 MiB。
 

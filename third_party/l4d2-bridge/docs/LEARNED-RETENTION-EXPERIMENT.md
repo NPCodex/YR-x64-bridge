@@ -12,14 +12,14 @@
 
 ```text
 Left 4 Dead 2/bin/dxvk_d3d9.dll
-Left 4 Dead 2/bin/.l4d2bridge/L4D2Bridge64.exe
+Left 4 Dead 2/bin/.yrbridge/YRBridge64.exe
 ```
 
-协议已升级，两份二进制必须配对更新。包不包含 DXVK 后端或正式 bridge.conf；保留现有 `d3d9vk_x64.dll`、mem1 配置、ReShade 和游戏文件。把包内 `LEARNED-RETENTION.conf` 的四项合并到现有 `bin/.l4d2bridge/bridge.conf`：
+协议已升级，两份二进制必须配对更新。包不包含 DXVK 后端或正式 bridge.conf；保留现有 `d3d9vk_x64.dll`、mem1 配置、ReShade 和游戏文件。把包内 `LEARNED-RETENTION.conf` 的四项合并到现有 `bin/.yrbridge/bridge.conf`：
 
 ```ini
 client.pageBlockRetentionPolicy = learned-aggressive
-client.pageBlockRetentionDb = .l4d2bridge/resource-retention.db
+client.pageBlockRetentionDb = .yrbridge/resource-retention.db
 client.pageBlockDiagnostics = False
 client.testReadbackRecovery = False
 ```
@@ -32,7 +32,7 @@ v1.1 发行配置推荐 `learned-aggressive`；源码在未配置时仍保守地
 policy=learned-aggressive persistent_db=enabled unknown_policy=DROP real_eviction=1 recovery=server-d3d9-readonly
 ```
 
-DB 相对路径以客户端 DLL 的目录为基准，默认实际位置是 **`bin/.l4d2bridge/resource-retention.db`**。可指定另一个 UTF-8 路径。日志每次新进程运行会覆盖，重开前先保存。
+DB 相对路径以客户端 DLL 的目录为基准，默认实际位置是 **`bin/.yrbridge/resource-retention.db`**。可指定另一个 UTF-8 路径。日志每次新进程运行会覆盖，重开前先保存。
 
 停用：将策略设为 `keep` 并重启；DB 可保留。清除学习：完全退出游戏后移动或删除 DB。回退二进制时恢复配对的旧客户端／Host。
 
@@ -97,7 +97,7 @@ Incremental Windows CNG SHA-256 hashes are fed logical rows in the existing uplo
 
 On preserve access, the client recovers all missing parent mips from the current server/DXVK resource with the existing event-query synchronization, verifies each hash, rebuilds and hashes the actual replacement backing, then permanently promotes the parent to KEEP. Full DISCARD overwrite does not read back or promote. A full non-DISCARD Lock still permits reads of previous contents, so it requires recovery. There is no historical-data recovery input or global device idle.
 
-The persistent DB at `bin/.l4d2bridge/resource-retention.db` is a checksummed, file-locked append-only KEEP journal. Strong lookup precedes Content fallback; records retain reason, first miss time, last seen time and miss count. Entries are never downgraded or automatically removed. Corruption/I/O failure disables further session eviction without replacing the file. A recovery failure persists KEEP and triggers session fallback; an unrecoverable current Lock returns an error instead of exposing zero or mismatched data. Successful later sessions retain that fingerprint from its first complete upload.
+The persistent DB at `bin/.yrbridge/resource-retention.db` is a checksummed, file-locked append-only KEEP journal. Strong lookup precedes Content fallback; records retain reason, first miss time, last seen time and miss count. Entries are never downgraded or automatically removed. Corruption/I/O failure disables further session eviction without replacing the file. A recovery failure persists KEEP and triggers session fallback; an unrecoverable current Lock returns an error instead of exposing zero or mismatched data. Successful later sessions retain that fingerprint from its first complete upload.
 
 Run once with an empty DB, save the five logs, then repeat with the DB retained. Require actual eviction, no new crashes/corruption, exact real-miss hashes and no fallback; warm DB hits should avoid previously learned misses. A cold run with no preserve misses cannot validate recovery/learning. CPU section savings do not imply equal reductions in DXVK-managed storage or GPU memory. CI uses an explicitly independent mock backend and does not constitute game/GPU validation.
 

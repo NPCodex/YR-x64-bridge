@@ -12,7 +12,7 @@ v1.1 固化当前已实机测试、作者确认的配置，不新增渲染实验
 
 - **客户端内存优化**：`client.pageBlockRetentionPolicy=learned-aggressive` 真正释放符合条件的 PageBlock backing。支持的静态 MANAGED 2D 纹理完成初始上传后，不必永远保留额外客户端副本；自然 preserve miss 从服务器资源恢复、校验，并学习为 KEEP。正常推荐配置启用这一已实机使用的策略，详细诊断与保留参考副本测试关闭。
 - **ReShade Home/input**：服务器呈现子窗口解决游戏/Host 跨进程 HWND 的输入所有权问题，利用受控键盘转发和公开 ReShade API 10 开关事件。Vulkan ReShade 6.0.1 在 x64 Host 的注册与三次 Home 开关捕获已通过；这不是所有叠加层和鼠标/Reset 场景的穷尽验证。
-- **x86 Host**：完整包含 `L4D2Bridge32.exe` + `d3d9vk_x86.dll`，与 x64 Host 共用同一 x86 客户端/协议。原有配置键 `client.testX86Server` 保留：True 选 x86，False 选 x64；两者均保持 `forceX64Server=True`。不通过重命名 EXE 改变位数。
+- **x86 Host**：完整包含 `YRBridge32.exe` + `d3d9vk_x86.dll`，与 x64 Host 共用同一 x86 客户端/协议。原有配置键 `client.testX86Server` 保留：True 选 x86，False 选 x64；两者均保持 `forceX64Server=True`。不通过重命名 EXE 改变位数。
 - **兼容性修正**：保留原生 x86/x64 adapter/caps 传输、真实纹理创建失败结果及 ATI1/ATI2 压缩块布局修复；不伪造 GPU Shader 能力。
 - **发布整理**：双语 README 优先介绍安装/使用，区分推荐、可选和开发诊断配置；保留原始实验方法和归属/许可证。版本文件与客户端/Host 启动标签统一为 `1.1`。
 

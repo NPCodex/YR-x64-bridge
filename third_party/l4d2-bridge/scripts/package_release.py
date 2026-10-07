@@ -27,8 +27,8 @@ def package(source, dxvk, output):
     client_output = output.parent / "l4d2-client-only"
     inputs = {
         "bin/dxvk_d3d9.dll": (source / "bridge/_compDebugOptimized_x86/src/client/d3d9.dll", 0x14c),
-        "bin/.l4d2bridge/L4D2Bridge64.exe": (source / "bridge/_compDebugOptimized_x64/src/server/L4D2Bridge64.exe", 0x8664),
-        "bin/.l4d2bridge/d3d9vk_x64.dll": (dxvk, 0x8664),
+        "bin/.yrbridge/YRBridge64.exe": (source / "bridge/_compDebugOptimized_x64/src/server/YRBridge64.exe", 0x8664),
+        "bin/.yrbridge/d3d9vk_x64.dll": (dxvk, 0x8664),
     }
     # Validate all inputs before creating output. Never deploy into a game directory.
     for path, expected in inputs.values():
@@ -44,7 +44,7 @@ def package(source, dxvk, output):
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, destination)
         hashes[relative] = hashlib.sha256(destination.read_bytes()).hexdigest()
-    shutil.copy2(ROOT / "config/bridge.conf", output / "bin/.l4d2bridge/bridge.conf")
+    shutil.copy2(ROOT / "config/bridge.conf", output / "bin/.yrbridge/bridge.conf")
     pinned = ROOT / ".deps/gplall/release/x64/d3d9.dll"
     backend_info = {"sha256": hashlib.sha256(dxvk.read_bytes()).hexdigest(),
                     "architecture": "x86_64", "source": "custom -DxvkDll"}

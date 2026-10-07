@@ -14,7 +14,7 @@ foreach($round in 1..$Rounds){
     $job=Start-Job -ArgumentList $samplePath,$round,$scenario -ScriptBlock {
       param($path,$round,$scenario)
       while($true){
-        $rows=Get-Process gamemd,L4D2Bridge64 -ErrorAction SilentlyContinue | ForEach-Object {
+        $rows=Get-Process gamemd,YRBridge64 -ErrorAction SilentlyContinue | ForEach-Object {
           [pscustomobject]@{time=(Get-Date -Format o);round=$round;scenario=$scenario;name=$_.ProcessName;pid=$_.Id;working_set=$_.WorkingSet64;private_bytes=$_.PrivateMemorySize64;cpu_seconds=$_.CPU;responding=$_.Responding}
         }
         if($rows){$rows | Export-Csv -LiteralPath $path -Append -NoTypeInformation -Encoding utf8}

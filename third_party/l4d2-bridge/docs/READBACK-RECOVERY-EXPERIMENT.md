@@ -16,13 +16,13 @@
 Left 4 Dead 2/
 └─ bin/
    ├─ dxvk_d3d9.dll
-   └─ .l4d2bridge/
-      └─ L4D2Bridge64.exe
+   └─ .yrbridge/
+      └─ YRBridge64.exe
 ```
 
 两个文件必须来自同一次实验构建；旧 Host 不支持实验命令。保留现有 `d3d9vk_x64.dll`、mem1 设置、ReShade 和其他配置。本实验不要求修改 DXVK。不要用完整发行包覆盖现用后端。
 
-向 `bin/.l4d2bridge/bridge.conf` 合并：
+向 `bin/.yrbridge/bridge.conf` 合并：
 
 ```ini
 client.testReadbackRecovery = True
@@ -30,7 +30,7 @@ client.testReadbackMaxResources = 20
 client.testReadbackRepeats = 3
 ```
 
-开关默认 False，上限默认 20（支持 0–20），重复默认 3（支持 1–8）。与 `client.pageBlockDiagnostics` 独立，可保持现有设置。进入有 Mod 的地图，正常活动、切换武器后正常退出，保存 **`bin/l4d2-readback.log`**、两份桥日志和原有内存日志。若要核对后端，附上 `L4D2Bridge64_d3d9.log`；`left4dead2_d3d9.log` 不一定来自 x64 Host。
+开关默认 False，上限默认 20（支持 0–20），重复默认 3（支持 1–8）。与 `client.pageBlockDiagnostics` 独立，可保持现有设置。进入有 Mod 的地图，正常活动、切换武器后正常退出，保存 **`bin/l4d2-readback.log`**、两份桥日志和原有内存日志。若要核对后端，附上 `YRBridge64_d3d9.log`；`left4dead2_d3d9.log` 不一定来自 x64 Host。
 
 新客户端进程首次写日志时覆盖旧文件，重启前先保存。启用时上传后的读回与 GPU 等待可能令加载变慢；这是明确的验证成本。测试后设 False 并重启即可停止；回退二进制需要恢复备份的配对客户端／Host。
 

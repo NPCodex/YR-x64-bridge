@@ -32,7 +32,7 @@
 1. 完全退出游戏与桥进程，备份当前的两个桥文件。
 2. 使用 `l4d2-bridge-cpu-update` 包，同时替换：
    - 游戏根目录的 `bin/dxvk_d3d9.dll`：32 位客户端。
-   - `bin/.l4d2bridge/L4D2Bridge64.exe`：64 位 Host。
+   - `bin/.yrbridge/YRBridge64.exe`：64 位 Host。
 3. 保留现有的 `d3d9vk_x64.dll`、ReShade、`bridge.conf` 和所有 MOD。此次更新包不包含这些文件。根目录的 D3D9 加载器继续按原安装方式使用。
 4. 使用同一设置和 FPS 上限，主菜单等待一分钟后，记录 Host 的 CPU 和游戏 FPS。进入战役，返回主菜单，再记录 CPU。若卡顿、帧率明显下降或退出异常，同时回退这两个文件。
 5. 提供同一轮的 `bridge32.log`、`bridge64.log`、`l4d2-memory.log`、`l4d2-host-memory.log`，以及菜单/战役 FPS 和任务管理器 Host CPU 范围。初次比较无需再录大型 ETL。
@@ -45,7 +45,7 @@ This test build reduces CPU spent waiting on empty command queues. It does not c
 
 The queue briefly spins, then waits on a named auto-reset event shared between processes. A waiting flag and protocol marker occupy existing header padding. Sequentially consistent publication and an armed-reader recheck prevent missed wakeups. Notification is sent only when a reader is preparing to wait. Idle waits are bounded to 10 ms for cancellation and notification failure recovery; an arriving command wakes the reader immediately. Queue layout, command structures and resource IDs are unchanged. Older producers or failed event creation fall back to yield waiting. `pull` copies the command before publishing the freed slot and returns by value; timeout reporting is explicit.
 
-Close the game and Host, back up both bridge binaries, then install **both** files from `l4d2-bridge-cpu-update`: `bin/dxvk_d3d9.dll` and `bin/.l4d2bridge/L4D2Bridge64.exe`. Preserve your DXVK, ReShade, configuration and MODs. Compare menu CPU/FPS after one minute with the same FPS cap, then check campaign gameplay and the return to the menu. Roll back both binaries if frame rate or stability regresses. Return the four bridge/memory logs and the observed CPU/FPS ranges. A new ETL is not initially required.
+Close the game and Host, back up both bridge binaries, then install **both** files from `l4d2-bridge-cpu-update`: `bin/dxvk_d3d9.dll` and `bin/.yrbridge/YRBridge64.exe`. Preserve your DXVK, ReShade, configuration and MODs. Compare menu CPU/FPS after one minute with the same FPS cap, then check campaign gameplay and the return to the menu. Roll back both binaries if frame rate or stability regresses. Return the four bridge/memory logs and the observed CPU/FPS ranges. A new ETL is not initially required.
 
 Windows CI covers idle thread CPU, timeout, cancellation, compatibility, wraparound/message integrity and actual x86↔x64 cross-process named-event communication. Game performance remains subject to L4D2 testing. Original NVIDIA code retains its MIT notices. Newly added code is MIT licensed under this project's notices; see [LICENSE](../LICENSE) and [THIRD_PARTY.md](../THIRD_PARTY.md).
 

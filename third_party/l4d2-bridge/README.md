@@ -28,7 +28,7 @@
 
 从 [Releases](https://github.com/YuuMJ/L4D2_Dxvk_32to64_Bridge-Nightlybuild/releases) 下载 ZIP。安装包仅包含运行文件、简短说明及许可证，旁附 `.sha256` 校验文件。
 
-退出游戏，备份原文件，将包内 `bin` 合并到游戏目录的 `bin`，保留隐藏目录 `.l4d2bridge` 的结构。卸载时移除本包安装的文件并恢复备份。
+退出游戏，备份原文件，将包内 `bin` 合并到游戏目录的 `bin`，保留隐藏目录 `.yrbridge` 的结构。卸载时移除本包安装的文件并恢复备份。
 
 自动测试验证编译和诊断逻辑，不代表已完成游戏实测。
 

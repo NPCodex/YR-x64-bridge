@@ -6,4 +6,4 @@
 
 验证：原版 YR 的菜单和进入地图正常，日志显示64位后端初始化成功；用户报告 MO 简化安装可用。长时间稳定性、性能及联机同步未完成标准化验证。
 
-安装前备份 d3d9.dll、bridge.conf、.l4d2bridge 和 ddraw.ini。详细安装/还原见 ZIP 内 README.md。请下载二进制 Release ZIP；GitHub 自动生成的 Source code ZIP 用于开发，不能直接当游戏补丁安装。
+安装前备份 d3d9.dll、bridge.conf、.yrbridge 和 ddraw.ini。详细安装/还原见 ZIP 内 README.md。请下载二进制 Release ZIP；GitHub 自动生成的 Source code ZIP 用于开发，不能直接当游戏补丁安装。

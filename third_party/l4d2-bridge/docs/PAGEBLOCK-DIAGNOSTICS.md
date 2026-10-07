@@ -10,7 +10,7 @@
 
 1. 完全退出 L4D2 和 Host，备份 `bin/dxvk_d3d9.dll`。
 2. 从本次成功构建下载 `l4d2-bridge-client-only`，只替换同路径的 x86 客户端 DLL。保留现有 Host、`d3d9vk_x64.dll`、ReShade、其他配置；不要用完整包覆盖现用 mem1 后端。
-3. 在 `bin/.l4d2bridge/bridge.conf` 中加入：
+3. 在 `bin/.yrbridge/bridge.conf` 中加入：
 
 ```ini
 client.pageBlockDiagnostics = True
@@ -93,7 +93,7 @@ Volume/volume texture、VB/IB、共享堆路径、DXVK 自己的 CPU backing 目
 
 ## English
 
-This update adds **instrumentation only** to the client-side PagefileShadow backing. It never discards backing, changes resource lifetime, real allocation/mapping/view-cache policy, IPC, D3D9 semantics or DXVK. Replace only the compatible x86 `bin/dxvk_d3d9.dll` from the client-only artifact, preserving the Host, chosen mem1/backend and other configuration. Enable `client.pageBlockDiagnostics=True` in `bin/.l4d2bridge/bridge.conf`; detailed destruction records additionally require `client.pageBlockDiagnosticsDetailed=True`. Both default to False. Save `bin/l4d2-pageblock.log` before the next run overwrites it.
+This update adds **instrumentation only** to the client-side PagefileShadow backing. It never discards backing, changes resource lifetime, real allocation/mapping/view-cache policy, IPC, D3D9 semantics or DXVK. Replace only the compatible x86 `bin/dxvk_d3d9.dll` from the client-only artifact, preserving the Host, chosen mem1/backend and other configuration. Enable `client.pageBlockDiagnostics=True` in `bin/.yrbridge/bridge.conf`; detailed destruction records additionally require `client.pageBlockDiagnosticsDetailed=True`. Both default to False. Save `bin/l4d2-pageblock.log` before the next run overwrites it.
 
 The unit of tracking is one backing surface/subresource. Existing bridge IDs and parent/mip/face metadata are stored as values without extra references. Backing creation, successful internal Lock, matching nonempty Unlock and backing destruction update the counters. Approximately ten-second snapshots and a best-effort detach snapshot separate destroyed lifetime totals from still-live, incomplete observations. Disabled locks add no timestamps, formatting or diagnostic allocations. Enabled hot paths update fixed storage; only summaries, large allocations, bursts and optional destruction details are formatted.
 

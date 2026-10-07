@@ -14,8 +14,8 @@
 
 ## 安装与恢复
 
-1. 完全退出游戏和 `L4D2Bridge64.exe`。
-2. 备份游戏内的 `bin/.l4d2bridge/d3d9vk_x64.dll` 到游戏目录外。
+1. 完全退出游戏和 `YRBridge64.exe`。
+2. 备份游戏内的 `bin/.yrbridge/d3d9vk_x64.dll` 到游戏目录外。
 3. 仅用本包同路径的 `d3d9vk_x64.dll` 替换该文件。客户端 `d3d9.dll`／`bin/dxvk_d3d9.dll` 和 Host EXE 保持现有版本。
 4. 将包内 `dxvk-memory-1.0.1.conf` 的两项设置合并到游戏生效的 `dxvk.conf`。保留原有配置，不要放进 `bridge.conf`，也不要覆盖 ReShade 或其他设置：
 
@@ -34,7 +34,7 @@ dxvk.bridgeMemoryDiagnostics = False
 
 保持地图、Mod、帧率上限、分辨率和覆盖层设置一致。在同一会话进退同一地图两次，每次活动至少 30 秒；退图后保持相同菜单前台状态，等待至少三分钟并延长到 HUD 数值稳定。
 
-保存两次菜单完整 HUD 截图并注明时间；退出后、再次启动前保存四份桥／内存日志和 x64 DXVK 日志。后者通常为 `L4D2Bridge64_d3d9.log`，位置取决于游戏工作目录／`DXVK_LOG_PATH`。重点查看日志开头的 `-bridge-mem1`、配置读取和 `L4D2 Bridge mem1 modified DXVK`，确认修改版和 16 MiB 设置已生效。没有出现时先检查加载路径与配置，不重复进图。
+保存两次菜单完整 HUD 截图并注明时间；退出后、再次启动前保存四份桥／内存日志和 x64 DXVK 日志。后者通常为 `YRBridge64_d3d9.log`，位置取决于游戏工作目录／`DXVK_LOG_PATH`。重点查看日志开头的 `-bridge-mem1`、配置读取和 `L4D2 Bridge mem1 modified DXVK`，确认修改版和 16 MiB 设置已生效。没有出现时先检查加载路径与配置，不重复进图。
 
 后端自动按约十秒记录一次 `BRIDGE_MEM`、`BRIDGE_MEM_TYPE`、`BRIDGE_MEM_CHUNK`，采样跟随上游定时任务，没有新增其他进程采样。`tick_ms` 在 Windows 使用 `GetTickCount64`，可与 Host 日志同名字段对齐。若效果不清楚，可以在同一 DLL 上把块大小改为 0，重启后做同样两轮；这提供诊断代码和编译工具链一致的上游策略对照。
 
@@ -63,7 +63,7 @@ dxvk.bridgeMemoryDiagnostics = False
 
 This opt-in modified DXVK 2.6.1 backend is retained as the 1.0.1 memory fix after the author's Intel Arc B580 validation. Download `l4d2-bridge-memory-update-v1.0.1` from the [backend workflow](https://github.com/yeyunyyds/L4D2_Dxvk_32to64_Bridge/actions/workflows/build-dxvk-experiment.yml). The default full package continues to use official DXVK 2.6.1. Install the full bridge first if necessary; this backend-only update is not a first-installation package. The hardware-tested mem1 implementation is retained, so existing users of that backend with a 16 MiB cap do not need a new DLL.
 
-Exit both processes, back up and replace only `bin/.l4d2bridge/d3d9vk_x64.dll`. Preserve the existing client, Host and other configuration. Merge the supplied `dxvk-memory-1.0.1.conf` example into your effective `dxvk.conf`: use `dxvk.bridgeMappedChunkSize = 16` and `dxvk.bridgeMemoryDiagnostics = False` for normal play. The DLL defaults to zero, keeping the upstream policy until configured; valid caps are 16, 32 and 64 MiB. Large resources retain the upstream dedicated-allocation fallback. To troubleshoot, enable diagnostics and optionally `dxvk.hud = memory,allocations`.
+Exit both processes, back up and replace only `bin/.yrbridge/d3d9vk_x64.dll`. Preserve the existing client, Host and other configuration. Merge the supplied `dxvk-memory-1.0.1.conf` example into your effective `dxvk.conf`: use `dxvk.bridgeMappedChunkSize = 16` and `dxvk.bridgeMemoryDiagnostics = False` for normal play. The DLL defaults to zero, keeping the upstream policy until configured; valid caps are 16, 32 and 64 MiB. Large resources retain the upstream dedicated-allocation fallback. To troubleshoot, enable diagnostics and optionally `dxvk.hud = memory,allocations`.
 
 Two stable menus showed 224 / 304 MiB Sysmem capacity versus 448 / 512 MiB in the preceding official-backend session. These are separate sessions, not a controlled benchmark. Capacity still grew by 80 MiB across the new cycles while texture backing increased by only 0.516 MiB. Nonempty chunks containing surviving allocations remain, along with approximately 2.5 GiB of x64 texture CPU backing during gameplay. This fix reduces retained capacity; it does not eliminate repeated-cycle growth or establish a long-term bound. See the [changelog](../CHANGELOG.md).
 
