@@ -27,4 +27,19 @@ try {
   if ($LASTEXITCODE -ne 0) { throw 'Texture creation failure test compilation failed' }
   & ./texture-creation-test.exe
   if ($LASTEXITCODE -ne 0) { throw "Texture creation failure test failed: $LASTEXITCODE" }
+  foreach($testName in @('ati_texture_layout','readback_layout')) {
+    & cl.exe /nologo /std:c++17 /EHsc /W4 /WX "/I$source/bridge/src/util" "$repoRoot/tests/$testName.cpp" "/Fe:$testName.exe"
+    if($LASTEXITCODE -ne 0){throw "$testName compilation failed"}
+    & "./$testName.exe"
+    if($LASTEXITCODE -ne 0){throw "$testName failed"}
+  }
+  & cl.exe /nologo /std:c++17 /EHsc /W4 /WX "/I$source/bridge/src/util" "$repoRoot/tests/command_queue.cpp" /Fe:command-queue-x86.exe
+  if($LASTEXITCODE -ne 0){throw 'x86 queue test compilation failed'}
+  SetupVS -Platform x64 -VcVarsVer '14.29'
+  & cl.exe /nologo /std:c++17 /EHsc /W4 /WX "/I$source/bridge/src/util" "$repoRoot/tests/command_queue.cpp" /Fe:command-queue-x64.exe
+  if($LASTEXITCODE -ne 0){throw 'x64 queue test compilation failed'}
+  & ./command-queue-x86.exe (Join-Path $testDir 'command-queue-x64.exe')
+  if($LASTEXITCODE -ne 0){throw 'x86 to x64 queue tests failed'}
+  & ./command-queue-x64.exe (Join-Path $testDir 'command-queue-x86.exe')
+  if($LASTEXITCODE -ne 0){throw 'x64 to x86 queue tests failed'}
 } finally { Pop-Location }
