@@ -56,6 +56,14 @@ def package(source, dxvk, output):
             backend_info["archive_sha256"] = backend_info.pop("sha256")
             backend_info["sha256"] = hashlib.sha256(dxvk.read_bytes()).hexdigest()
             backend_info["source"] = metadata["release"]
+    source_metadata = ROOT / ".deps/gplall/source-backend.json"
+    if source_metadata.exists():
+        metadata = json.loads(source_metadata.read_text(encoding="utf-8-sig"))
+        if metadata["sha256"] != backend_info["sha256"]:
+            raise ValueError("Source-built backend checksum mismatch")
+        backend_info.update(metadata)
+        shutil.copy2(source_metadata.with_name("DXVK-GPLALL-LICENSE.txt"), ROOT / "licenses/DXVK-GPLALL-LICENSE.txt")
+        backend_info["source"] = metadata["release"]
     (output / "BACKEND.json").write_text(json.dumps(backend_info, indent=2) + "\n")
     shutil.copy2(ROOT / "docs/TESTING.md", output / "TESTING.md")
     shutil.copy2(ROOT / "docs/MEMORY-DIAGNOSTICS.md", output / "MEMORY-DIAGNOSTICS.md")

@@ -36,6 +36,7 @@ foreach($relative in @('bridge.conf','.yrbridge/bridge.conf')){Copy-Item -Litera
 foreach($file in @('README.md','LICENSE','THIRD_PARTY.md','VERSION','dependencies.json')){Copy-Item -LiteralPath (Join-Path $root $file) -Destination $output}
 if(Test-Path -LiteralPath (Join-Path $BridgeDirectory 'BACKEND.json')){Copy-Item -LiteralPath (Join-Path $BridgeDirectory 'BACKEND.json') -Destination (Join-Path $output 'BACKEND.json')}
 if($env:UPSTREAM_COMMIT){@{upstream_commit=$env:UPSTREAM_COMMIT;recipe_commit=$env:GITHUB_SHA;game_validation='Pending'} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'UPSTREAM.json'); Copy-Item -LiteralPath (Join-Path $root 'config/backend.json') -Destination (Join-Path $output 'dependencies.json') -Force}
+if(Test-Path -LiteralPath (Join-Path $root 'third_party/l4d2-bridge/.deps/gplall/source-backend.json')){Copy-Item -LiteralPath (Join-Path $root 'third_party/l4d2-bridge/.deps/gplall/source-backend.json') -Destination (Join-Path $output 'dependencies.json') -Force}
 Copy-Item -LiteralPath (Join-Path $BridgeDirectory 'licenses') -Destination $output -Recurse
 Copy-Item -LiteralPath (Join-Path $root 'docs') -Destination $output -Recurse
 $hashes=[ordered]@{}
