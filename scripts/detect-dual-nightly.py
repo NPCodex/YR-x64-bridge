@@ -21,9 +21,11 @@ def main():
     pending = True
     if os.environ.get('FORCE_REBUILD', 'false').lower() != 'true':
         try:
-            pending = not detector.release_complete(detector.api('repos/'+os.environ['GITHUB_REPOSITORY']+'/releases/tags/'+tag), tag)
+            release = detector.api('repos/'+os.environ['GITHUB_REPOSITORY']+'/releases/tags/'+tag)
         except urllib.error.HTTPError as error:
             if error.code != 404: raise
+        else:
+            pending = not detector.release_complete(release, tag)
     metadata = {'name':'DXVK-GPLALL','version':'nightly-'+gplall[:12], 'variant':'GCC-SSE2-O3-LTO-source',
                 'source_commit':gplall, 'source_branch':branch, 'source_repository':repo['html_url'],
                 'release':repo['html_url']+'/commit/'+gplall}

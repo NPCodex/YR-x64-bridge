@@ -5236,7 +5236,7 @@ index 4be48da..06490c1 100644
  
        result = Result::Timeout;
  
-@@ -145,29 +244,31 @@ namespace bridge_util {
+@@ -145,29 +244,34 @@ namespace bridge_util {
  
      // Returns a copy to the first element in queue, AND removes it
      // Note: Blocks if queue is empty
@@ -5254,7 +5254,10 @@ index 4be48da..06490c1 100644
 -          std::atomic_thread_fence(std::memory_order_seq_cst);
 +          const T value = m_data[currentWrite];
 +          m_write->store(queueIdxInc(currentWrite), std::memory_order_seq_cst);
-+          if (m_spaceEvent && m_spaceWaiting->exchange(0, std::memory_order_seq_cst)) { SetEvent(m_spaceEvent); }
++          if (m_spaceEvent && m_spaceWaiting->load(std::memory_order_seq_cst) &&
++              m_spaceWaiting->exchange(0, std::memory_order_seq_cst)) {
++            SetEvent(m_spaceEvent);
++          }
            result = Result::Success;
 -          return m_data[currentWrite];
 +          return value;
@@ -5280,7 +5283,7 @@ index 4be48da..06490c1 100644
        return m_default;
      }
  
-@@ -214,4 +315,4 @@ namespace bridge_util {
+@@ -214,4 +318,4 @@ namespace bridge_util {
      }
    };
  

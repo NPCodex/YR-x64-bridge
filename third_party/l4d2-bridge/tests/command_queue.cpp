@@ -59,6 +59,15 @@ struct Memory {
   ~Memory() { UnmapViewOfFile(data); CloseHandle(handle); }
   Memory(const Memory&) = delete;
 };
+struct SpaceEvent {
+  HANDLE handle;
+  explicit SpaceEvent(const std::string& queueName) :
+    handle(OpenEventA(SYNCHRONIZE, FALSE, (queueName + "Space").c_str())) {
+    require(handle != nullptr, "space event open failed");
+  }
+  ~SpaceEvent() { CloseHandle(handle); }
+  SpaceEvent(const SpaceEvent&) = delete;
+};
 uint64_t fileTime(const FILETIME& time) {
   return (static_cast<uint64_t>(time.dwHighDateTime) << 32) | time.dwLowDateTime;
 }
@@ -141,6 +150,30 @@ void testNotificationCoalescing() {
     l4d2_queue::counters.snapshot().signals == before.signals + 2,
     "a rearmed reader was not notified");
 }
+void testSpaceNotificationCoalescing() {
+  const auto name = uniqueName();
+  Memory memory(name);
+  Writer writer(name, memory.data, kMapSize, kQueueSize);
+  Reader reader(name, memory.data, kMapSize, kQueueSize);
+  SpaceEvent space(name);
+  auto* waiting = reinterpret_cast<std::atomic<uint32_t>*>(
+    static_cast<char*>(memory.data) + 80);
+  for (uint32_t i = 0; i < kQueueSize - 1; ++i) {
+    require(writer.push(Item{Commands::Bridge_Any, i, 0}) == Result::Success, "fill failed");
+  }
+  for (uint32_t i = 0; i < kQueueSize - 1; ++i) {
+    // Only the first and last pulls have an armed producer. The event itself,
+    // rather than producer progress after its 10 ms fallback, proves the wake.
+    const bool armed = i == 0 || i == kQueueSize - 2;
+    if (armed) { waiting->store(1, std::memory_order_seq_cst); }
+    Result result = Result::Failure;
+    const auto item = reader.pull(result, 1000);
+    require(result == Result::Success && item.sequence == i, "space wake lost a command");
+    require(waiting->load(std::memory_order_seq_cst) == 0, "space wait flag was not cleared");
+    require(WaitForSingleObject(space.handle, 0) == (armed ? WAIT_OBJECT_0 : WAIT_TIMEOUT),
+      "space notification was missing or repeated without a waiting producer");
+  }
+}
 void testCounters() {
   l4d2_queue::Counters counters;
   std::thread first([&] {
@@ -163,7 +196,7 @@ void testCounters() {
     s.fullWaits == 2000 && s.fullWaitMs == 18000 && s.maxFullWaitMs == 11,
     "concurrent queue counters lost updates");
 }
-void testFullProducer() {
+void testFullProducer(bool waitForSpace) {
   const auto name = uniqueName();
   Memory memory(name);
   Writer writer(name, memory.data, kMapSize, kQueueSize);
@@ -181,7 +214,10 @@ void testFullProducer() {
   Result result = Result::Failure;
   reader.pull(result, 1000);
   require(result == Result::Success, "consumer did not release space");
-  require(task.get() < 1000000, "full producer used over 100 ms CPU");
+  const auto cpu = task.get();
+  if (waitForSpace) { require(cpu < 1000000, "full producer used over 100 ms CPU"); }
+  std::printf("full producer CPU (waitForSpace=%d): %.3f ms / 300 ms\n",
+    waitForSpace ? 1 : 0, static_cast<double>(cpu) / 10000.0);
 }
 void testWakeAndWrap() {
   const auto name = uniqueName();
@@ -215,11 +251,22 @@ void runReader(const std::string& name) {
       value.checksum == (i ^ 0xa55a5aa5u), "cross-process sequence was corrupted");
   }
 }
-void testPeer(const std::wstring& executable) {
+void testPeer(const std::wstring& executable, bool peerWaitForSpace) {
   const auto name = uniqueName();
   Memory memory(name);
   Writer writer(name, memory.data, kMapSize, kQueueSize);
-  std::wstring command = L"\"" + executable + L"\" --reader " + std::wstring(name.begin(), name.end());
+  SpaceEvent space(name);
+  for (uint32_t i = 0; i < kQueueSize - 1; ++i) {
+    require(writer.push(Item{Commands::Bridge_Any, i, i ^ 0xa55a5aa5u}) == Result::Success,
+      "cross-process fill failed");
+  }
+  // Arm before the peer starts. No producer push is running during this check,
+  // so a timeout retry cannot hide a missing event or an incompatible layout.
+  auto* waiting = reinterpret_cast<std::atomic<uint32_t>*>(
+    static_cast<char*>(memory.data) + 80);
+  waiting->store(1, std::memory_order_seq_cst);
+  std::wstring command = L"\"" + executable + L"\" --reader " + std::wstring(name.begin(), name.end()) +
+    (peerWaitForSpace ? L" 1" : L" 0");
   STARTUPINFOW startup{};
   startup.cb = sizeof(startup);
   PROCESS_INFORMATION process{};
@@ -227,8 +274,10 @@ void testPeer(const std::wstring& executable) {
     0, nullptr, nullptr, &startup, &process) != FALSE, "peer launch failed");
   CloseHandle(process.hThread);
   try {
-    Sleep(25);
-    for (uint32_t i = 0; i < kMessageCount; ++i) {
+    require(WaitForSingleObject(space.handle, 5000) == WAIT_OBJECT_0,
+      "peer did not signal the space event");
+    require(waiting->load(std::memory_order_seq_cst) == 0, "peer did not clear the space wait flag");
+    for (uint32_t i = static_cast<uint32_t>(kQueueSize - 1); i < kMessageCount; ++i) {
       require(writer.push(Item{Commands::Bridge_Any, i, i ^ 0xa55a5aa5u}) == Result::Success,
         "cross-process writer stalled");
       if (i % 8191 == 0) { Sleep(12); }
@@ -245,9 +294,12 @@ void testPeer(const std::wstring& executable) {
   CloseHandle(process.hProcess);
 }
 int wmain(int argc, wchar_t** argv) {
-  yr_perf::waitForSpace.store(true);
   try {
-    if (argc == 3 && std::wstring(argv[1]) == L"--reader") {
+    require(!yr_perf::waitForSpace.load(), "waitForSpace must remain disabled by default");
+    if (argc == 4 && std::wstring(argv[1]) == L"--reader") {
+      const std::wstring option = argv[3];
+      require(option == L"0" || option == L"1", "expected reader waitForSpace mode 0 or 1");
+      yr_perf::waitForSpace.store(option == L"1");
       const std::wstring wideName = argv[2];
       std::string name;
       for (const wchar_t character : wideName) {
@@ -257,13 +309,21 @@ int wmain(int argc, wchar_t** argv) {
       runReader(name);
     } else {
       require(argc == 2, "expected peer executable path");
-      testIdleAndCancel();
-      testTimeoutAndCompatibility();
-      testNotificationCoalescing();
       testCounters();
-      testFullProducer();
-    testWakeAndWrap();
-      testPeer(argv[1]);
+      for (const bool waitForSpace : {false, true}) {
+        yr_perf::waitForSpace.store(waitForSpace);
+        testIdleAndCancel();
+        testTimeoutAndCompatibility();
+        testNotificationCoalescing();
+        testSpaceNotificationCoalescing();
+        testFullProducer(waitForSpace);
+        testWakeAndWrap();
+        for (const bool peerWaitForSpace : {false, true}) {
+          testPeer(argv[1], peerWaitForSpace);
+          std::printf("cross-process queue passed (writer=%d, reader=%d)\n",
+            waitForSpace ? 1 : 0, peerWaitForSpace ? 1 : 0);
+        }
+      }
       std::puts("Command queue tests passed");
     }
     return 0;

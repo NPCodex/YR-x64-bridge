@@ -2,13 +2,14 @@
 
 给《尤里的复仇》和心灵终结（Mental Omega）使用的 D3D9 → x64 DXVK 桥接集成包。游戏和游戏逻辑仍是 32 位，渲染后端运行在独立的 64 位进程中。
 
-本项目参考 L4D2 Nightly 的补丁和构建方法，保留已验证的完整 v1.1 适配补丁，自动编译 NVIDIA dxvk-remix main 的最新 Bridge，并搭配固定的 DXVK-GPLALL 2.6.8-2 x64 后端。它不是重新编译的 64 位游戏引擎，也不包含游戏文件。
+本项目参考 L4D2 Nightly 的补丁和构建方法，保留完整适配补丁，编译 NVIDIA dxvk-remix 的 Bridge。正式版搭配固定的 DXVK-GPLALL 2.6.8-2 x64 后端；源码 Nightly 同时跟踪 Remix 和 GPLALL 的最新源码。它不是重新编译的 64 位游戏引擎，也不包含游戏文件。
 
 ## 安装
 
-1. 将 Release ZIP 的内容中的 `d3d9.dll` 和 `.yrbridge` 文件夹直接解压到游戏根目录，与 `gamemd.exe` 同级。
-2. 启动游戏。
-3. 建议把渲染器改为 `cnc-ddraw` 。
+1. 退出游戏和 Host，备份现有桥接文件及配置。
+2. 将 Release ZIP 中的 `d3d9.dll`、根目录 `bridge.conf` 和整个 `.yrbridge` 文件夹解压到游戏根目录，与 `gamemd.exe` 同级，保留现有的 `ddraw.dll`。
+3. 使用支持 D3D9 的 `cnc-ddraw`，确认 `ddraw.ini` 中生效的 `renderer=direct3d9`；MO 客户端保存设置后再核对一次。
+4. 按原来的方式启动游戏；本机此前需要管理员权限才能正常启动。
 
 需要 cnc-ddraw 时，可从 [官方项目](https://github.com/FunkyFr3sh/cnc-ddraw) 获取；安装其他渲染器前先还原本桥接。
 
@@ -22,7 +23,7 @@
 ├── bridge.conf
 └── .yrbridge/
     ├── bridge.conf
-    ├── YRBridge64.exe         # x64 Host，名称沿用上游
+    ├── YRBridge64.exe          # 本项目的 x64 Host
     └── d3d9vk_x64.dll           # GPLALL x64 DXVK 后端
 ```
 
@@ -32,7 +33,7 @@
 
 应同时出现 `gamemd.exe` 和 `YRBridge64.exe`。`bridge32.log` 显示握手完成，`bridge64.log` 显示 `d3d9vk_x64.dll` 加载及设备创建成功；`YRBridge64_d3d9.log` 显示 DXVK 信息。日志可能在游戏根目录或 `.yrbridge`。
 
-本机原版 YR 已验证管理员启动、正常菜单和进入地图；用户报告 MO 手动安装链路可用。未进行标准化的长时间、存读档、性能或多机联机测试，不把“能够运行”解释为所有同步问题均已解决。详见 [验证记录](docs/VALIDATION.md)。
+原版 YR 已验证菜单和进入地图；此前的 MO 测试版已获用户确认：地图加载、存读档、连续切图和内存增长检查正常，YR 命名迁移后也能进入地图。各结果只适用于当时测试的版本，不能直接套用于后续 Nightly。标准化性能对比、长时间稳定性和多机联机仍需验证。详见 [验证记录](docs/VALIDATION.md)。
 
 ## 还原
 
@@ -40,15 +41,21 @@
 
 ## 自动构建和发布
 
-推送本仓库至默认分支后，在 Actions 中启用 **Build YR MO Nightly**。
-每小时第 23 分钟检查 NVIDIA main；GitHub 调度可能延迟。检测新提交后编译 x86 客户端及匹配 x64 Host，运行诊断测试，再自动发布预发布版。
-手动执行 Run workflow 时，upstream_commit 留空跟随 main，或填写完整 40 位 SHA。force_rebuild 可重建已有版本。
-使用仓库自带 GITHUB_TOKEN，无需个人令牌。发布任务具备 contents:write 权限。
+仓库启用 Actions 后有以下入口：
 
-config/backend.json 固定 GPLALL 2.6.8-2 的下载地址和 SHA256。后端不会自动升级；更新该文件后，它与 Bridge 适配补丁的指纹会参与发布标签，即使 Bridge 没变化也能生成新包。
-补丁冲突、编译、诊断或校验失败时不发布。游戏兼容性仍需实测。
+| 入口 | 触发方式 | 后端与产物 |
+| --- | --- | --- |
+| **Build YR MO Nightly**（历史名称） | main 推送、手动运行 | 固定 GPLALL 2.6.8-2，按提交版本发布正式包 |
+| **Latest Remix and GPLALL source Nightly** | main 推送、每小时第 23 分钟、手动运行 | 跟踪 Remix main 和 GPLALL 默认分支，发布预发布包 |
+| **Build YR package manually** | 手动运行 | 使用构建脚本默认的固定 Remix 提交和固定后端，只上传 Actions 构建产物 |
 
-本地源码构建需要 Windows、Python 3.11、Git、VS C++ x86/x64 工具链及 Windows SDK：
+正式版入口的 `upstream_commit` 留空跟随 Remix main，或填写完整 40 位 SHA；两个发布入口的 `force_rebuild` 可重建已有版本。定时调度仅属于源码 Nightly，GitHub 调度可能延迟。
+
+各入口共用编译、诊断和打包流程，两个发布渠道共用发布流程，使用仓库自带的 `GITHUB_TOKEN`。替换已发布附件前先将 Release 置为草稿，回下载核验 ZIP 与 SHA256 一致后才公开；中断保留为未完成状态，下次可重试。检测已发布包时比较校验文件与 GitHub 资产摘要，缺摘要的旧资产会重新构建一次。
+
+包内 `BACKEND.json` 与 `dependencies.json` 标明实际后端，`UPSTREAM.json` 记录构建来源。补丁冲突、编译、诊断或校验失败时不发布。详细步骤见 [构建说明](docs/BUILD.md) 和 [源码 Nightly](docs/SOURCE-NIGHTLY.md)。
+
+本地源码构建需要 Windows、Python 3.11、Git、VS C++ x86/x64 工具链及 Windows SDK。默认使用 MSVC `14.29`，可用 `-VcVarsVer` 指定已安装的兼容版本，编译和诊断使用相同参数：
 
 ```powershell
 python -m pip install meson==1.3.2 ninja==1.11.1.1

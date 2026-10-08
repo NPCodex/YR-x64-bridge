@@ -9,6 +9,8 @@ import json
 from pathlib import Path
 import shutil
 import struct
+import tempfile
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -18,53 +20,61 @@ def machine(path):
     if len(data) < 64 or data[:2] != b"MZ":
         raise ValueError(f"Not a PE file: {path}")
     offset = struct.unpack_from("<I", data, 60)[0]
-    if data[offset:offset + 4] != b"PE\0\0":
+    if offset + 6 > len(data) or data[offset:offset + 4] != b"PE\0\0":
         raise ValueError(f"Invalid PE signature: {path}")
     return struct.unpack_from("<H", data, offset + 4)[0]
 
 
-def package(source, dxvk, output):
-    client_output = output.parent / "l4d2-client-only"
-    inputs = {
-        "bin/dxvk_d3d9.dll": (source / "bridge/_compDebugOptimized_x86/src/client/d3d9.dll", 0x14c),
-        "bin/.yrbridge/YRBridge64.exe": (source / "bridge/_compDebugOptimized_x64/src/server/YRBridge64.exe", 0x8664),
-        "bin/.yrbridge/d3d9vk_x64.dll": (dxvk, 0x8664),
-    }
-    # Validate all inputs before creating output. Never deploy into a game directory.
-    for path, expected in inputs.values():
-        if machine(path) != expected:
-            raise ValueError(f"Wrong architecture: {path}")
-    for destination in (output, client_output):
-        if destination.exists():
-            raise FileExistsError(f"Output already exists; preserve or move it first: {destination}")
-    output.mkdir(parents=True, exist_ok=False)
+def backend_provenance(dxvk, backend_metadata=None):
+    """Bind provenance to this DLL; unrelated source-build caches are irrelevant."""
+    digest = hashlib.sha256(dxvk.read_bytes()).hexdigest()
+    backend_info = {"sha256": digest, "architecture": "x86_64", "source": "custom -DxvkDll"}
+    backend_license = None
+    if backend_metadata is not None:
+        metadata = json.loads(backend_metadata.read_text(encoding="utf-8-sig"))
+        if metadata.get("sha256") != digest:
+            raise ValueError("Source-built backend checksum mismatch")
+        if metadata.get("architecture", "x86_64") != "x86_64":
+            raise ValueError("Backend metadata architecture mismatch")
+        backend_info.update(metadata)
+        backend_info["source"] = metadata.get("release", metadata.get("source", backend_info["source"]))
+        if metadata.get("name") == "DXVK-GPLALL":
+            backend_license = backend_metadata.with_name("DXVK-GPLALL-LICENSE.txt")
+    else:
+        archive = ROOT / ".deps/gplall/backend.zip"
+        if archive.exists():
+            metadata = json.loads((ROOT / "config/backend.json").read_text(encoding="utf-8-sig"))
+            if hashlib.sha256(archive.read_bytes()).hexdigest() == metadata["sha256"]:
+                with zipfile.ZipFile(archive) as release:
+                    pinned_digest = hashlib.sha256(release.read("x64/d3d9.dll")).hexdigest()
+                if pinned_digest == digest:
+                    backend_info.update(metadata)
+                    backend_info["archive_sha256"] = backend_info.pop("sha256")
+                    backend_info["sha256"] = digest
+                    backend_info["source"] = metadata["release"]
+                    backend_license = ROOT / "licenses/DXVK-GPLALL-LICENSE.txt"
+    if backend_license is not None and not backend_license.is_file():
+        raise FileNotFoundError(f"Backend license not found: {backend_license}")
+    return backend_info, backend_license
+
+
+def assemble(source, inputs, output, client_output, backend_info, backend_license, upstream):
+    """Assemble both packages under a private staging directory."""
+    output.mkdir()
     hashes = {}
     for relative, (path, _) in inputs.items():
         destination = output / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, destination)
         hashes[relative] = hashlib.sha256(destination.read_bytes()).hexdigest()
+    if hashes["bin/.yrbridge/d3d9vk_x64.dll"] != backend_info["sha256"]:
+        raise ValueError("Backend changed during packaging")
     shutil.copy2(ROOT / "config/bridge.conf", output / "bin/.yrbridge/bridge.conf")
-    pinned = ROOT / ".deps/gplall/release/x64/d3d9.dll"
-    backend_info = {"sha256": hashlib.sha256(dxvk.read_bytes()).hexdigest(),
-                    "architecture": "x86_64", "source": "custom -DxvkDll"}
-    if pinned.exists() and pinned.read_bytes() == dxvk.read_bytes():
-        archive = ROOT / ".deps/gplall/backend.zip"
-        metadata = json.loads((ROOT / "config/backend.json").read_text())
-        if archive.exists() and hashlib.sha256(archive.read_bytes()).hexdigest() == metadata["sha256"]:
-            backend_info.update(metadata)
-            backend_info["archive_sha256"] = backend_info.pop("sha256")
-            backend_info["sha256"] = hashlib.sha256(dxvk.read_bytes()).hexdigest()
-            backend_info["source"] = metadata["release"]
-    source_metadata = ROOT / ".deps/gplall/source-backend.json"
-    if source_metadata.exists():
-        metadata = json.loads(source_metadata.read_text(encoding="utf-8-sig"))
-        if metadata["sha256"] != backend_info["sha256"]:
-            raise ValueError("Source-built backend checksum mismatch")
-        backend_info.update(metadata)
-        shutil.copy2(source_metadata.with_name("DXVK-GPLALL-LICENSE.txt"), ROOT / "licenses/DXVK-GPLALL-LICENSE.txt")
-        backend_info["source"] = metadata["release"]
-    (output / "BACKEND.json").write_text(json.dumps(backend_info, indent=2) + "\n")
+    (output / "BACKEND.json").write_text(json.dumps(backend_info, indent=2) + "\n", encoding="utf-8")
+    hashes["BACKEND.json"] = hashlib.sha256((output / "BACKEND.json").read_bytes()).hexdigest()
+    if upstream:
+        (output / "UPSTREAM.json").write_text(json.dumps(upstream, indent=2) + "\n", encoding="utf-8")
+        hashes["UPSTREAM.json"] = hashlib.sha256((output / "UPSTREAM.json").read_bytes()).hexdigest()
     shutil.copy2(ROOT / "docs/TESTING.md", output / "TESTING.md")
     shutil.copy2(ROOT / "docs/MEMORY-DIAGNOSTICS.md", output / "MEMORY-DIAGNOSTICS.md")
     shutil.copy2(ROOT / "docs/FIRST-GAME-VALIDATION.md", output / "FIRST-GAME-VALIDATION.md")
@@ -78,21 +88,61 @@ def package(source, dxvk, output):
     shutil.copy2(source / "bridge/LICENSE-MIT", licenses / "Bridge-MIT.txt")
     shutil.copy2(source / "bridge/ThirdPartyLicenses.txt", licenses / "Bridge-third-party.txt")
     shutil.copy2(ROOT / "licenses/DXVK-LICENSE.txt", licenses / "DXVK-LICENSE.txt")
-    if backend_info.get("name") == "DXVK-GPLALL":
-        shutil.copy2(ROOT / "licenses/DXVK-GPLALL-LICENSE.txt", licenses / "DXVK-GPLALL-LICENSE.txt")
-    (output / "SHA256.json").write_text(json.dumps(hashes, indent=2) + "\n")
+    if backend_license is not None:
+        shutil.copy2(backend_license, licenses / "DXVK-GPLALL-LICENSE.txt")
+    (output / "SHA256.json").write_text(json.dumps(hashes, indent=2) + "\n", encoding="utf-8")
     (client_output / "bin").mkdir(parents=True, exist_ok=False)
     shutil.copy2(output / "bin/dxvk_d3d9.dll", client_output / "bin/dxvk_d3d9.dll")
     shutil.copy2(ROOT / "docs/MEMORY-DIAGNOSTICS.md", client_output / "MEMORY-DIAGNOSTICS.md")
     (client_output / "licenses").mkdir()
-    for filename in ("Bridge-MIT.txt", "Bridge-third-party.txt"):
+    for filename in ("Bridge-MIT.txt", "Bridge-third-party.txt", "DXVK-LICENSE.txt"):
         shutil.copy2(licenses / filename, client_output / "licenses" / filename)
-    shutil.copy2(licenses / "DXVK-LICENSE.txt", client_output / "licenses/DXVK-LICENSE.txt")
     for filename in ("VERSION", "LICENSE", "THIRD_PARTY.md"):
         shutil.copy2(ROOT / filename, client_output / filename)
     (client_output / "SHA256.json").write_text(json.dumps({
         "bin/dxvk_d3d9.dll": hashes["bin/dxvk_d3d9.dll"],
-    }, indent=2) + "\n")
+    }, indent=2) + "\n", encoding="utf-8")
+
+
+def package(source, dxvk, output, backend_metadata=None, upstream_commit=None, recipe_commit=None):
+    client_output = output.parent / "l4d2-client-only"
+    if output == client_output:
+        raise ValueError("Full and client-only packages need distinct output paths")
+    inputs = {
+        "bin/dxvk_d3d9.dll": (source / "bridge/_compDebugOptimized_x86/src/client/d3d9.dll", 0x14c),
+        "bin/.yrbridge/YRBridge64.exe": (source / "bridge/_compDebugOptimized_x64/src/server/YRBridge64.exe", 0x8664),
+        "bin/.yrbridge/d3d9vk_x64.dll": (dxvk, 0x8664),
+    }
+    # Validate all inputs before creating output. Never deploy into a game directory.
+    for path, expected in inputs.values():
+        if machine(path) != expected:
+            raise ValueError(f"Wrong architecture: {path}")
+    backend_info, backend_license = backend_provenance(dxvk, backend_metadata)
+    upstream = None
+    if upstream_commit:
+        upstream = {"upstream_commit": upstream_commit, "recipe_commit": recipe_commit,
+                    "game_validation": "Pending"}
+    for destination in (output, client_output):
+        if destination.exists():
+            raise FileExistsError(f"Output already exists; preserve or move it first: {destination}")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=".package-", dir=output.parent) as temporary:
+        staged = Path(temporary)
+        staged_output = staged / "full"
+        staged_client = staged / "client"
+        assemble(source, inputs, staged_output, staged_client, backend_info, backend_license, upstream)
+        published = []
+        try:
+            for candidate, destination in ((staged_output, output), (staged_client, client_output)):
+                if destination.exists():
+                    raise FileExistsError(f"Output already exists; preserve or move it first: {destination}")
+                candidate.rename(destination)
+                published.append(destination)
+        except BaseException:
+            # Only remove directories created by this invocation; existing packages survive.
+            for destination in reversed(published):
+                shutil.rmtree(destination)
+            raise
     print(f"L4D2 D3D9 Bridge v{(ROOT / 'VERSION').read_text().strip()}: {output}")
     print(f"Client-only update: {client_output}; preserves the installed host and DXVK")
 
@@ -102,5 +152,10 @@ if __name__ == "__main__":
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--dxvk", type=Path, required=True)
     parser.add_argument("--output", type=Path, default=ROOT / "dist/l4d2-bridge")
+    parser.add_argument("--backend-metadata", type=Path)
+    parser.add_argument("--upstream-commit")
+    parser.add_argument("--recipe-commit")
     args = parser.parse_args()
-    package(args.source.resolve(), args.dxvk.resolve(), args.output.resolve())
+    package(args.source.resolve(), args.dxvk.resolve(), args.output.resolve(),
+            args.backend_metadata.resolve() if args.backend_metadata else None,
+            args.upstream_commit, args.recipe_commit)

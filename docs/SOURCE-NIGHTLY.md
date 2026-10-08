@@ -6,9 +6,11 @@
 - Digger1955/dxvk-gplall 跟踪 GitHub 的默认分支；使用 Arch MinGW GCC 编译环境与上游编译选项，编译 x64 d3d9.dll，打包为 .yrbridge/d3d9vk_x64.dll。默认分支变化会自动跟随，并非只等待 Release。
 - 检测阶段锁定两个完整提交 SHA，后续任务只编译这两个提交。标签包含版本、两个源码 SHA 和构建配方指纹；任一改变就构建，完整同名发布已存在则跳过。手动 force_rebuild 可重建。
 - PE 位数、文件哈希及 Bridge 诊断通过后，自动发布 GitHub **预发布版**，附 ZIP 与 SHA256。编译失败不会发布新的包；实际地图兼容性仍需测试。
-- BACKEND.json 与 dependencies.json 记录 GPLALL 源码提交和 DLL 哈希；UPSTREAM.json 记录 Remix 与本仓库提交。
+- 构建时显式传入本次 GPLALL 元数据并核验 DLL 哈希，不会隐式读取其他构建的旧缓存。BACKEND.json 与 dependencies.json 记录实际 GPLALL 源码提交和 DLL 哈希；UPSTREAM.json 记录 Remix 与本仓库提交。
 - 原 nightly.yml 保留正式版本构建入口及固定已验证 GPLALL Release 后端，取消原定时触发。正式版本递增规则不变。
 
 使用：GitHub → Actions → Latest Remix and GPLALL source Nightly → Run workflow。仓库需启用 Actions，发布任务使用内置 GITHUB_TOKEN，无需新增密钥。
+
+编译和发布分别复用 build-bridge.yml、publish-release.yml。重建先将已有 Release 置为草稿，附件上传完成后回下载核验 ZIP 与 SHA256，再公开；中途失败保留为未完成状态以便下次恢复。检测已发布包时校验 SHA256 文件和 GitHub 的 ZIP 资产摘要，缺摘要的旧资产会重新构建一次。
 
 安装：解压 ZIP 到游戏根目录，保留 .yrbridge 目录结构。Nightly 为测试版，更新前备份当前已验证补丁。

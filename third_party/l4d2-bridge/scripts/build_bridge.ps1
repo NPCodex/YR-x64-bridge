@@ -5,12 +5,14 @@
 param(
   [string]$DxvkDll,
   [string]$VcVarsVer = '14.29',
-  [string]$UpstreamCommit = '9aa74f8dfad2188efbd0f717c64d9f8fa909787e'
+  [string]$UpstreamCommit = '9aa74f8dfad2188efbd0f717c64d9f8fa909787e',
+  [string]$BackendMetadata = ''
 )
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path $PSScriptRoot -Parent
 if (-not $DxvkDll) { $DxvkDll = & "$PSScriptRoot/prepare_backend.ps1" }
 $dxvkPath = (Resolve-Path $DxvkDll).Path
+if ($BackendMetadata) { $BackendMetadata = (Resolve-Path -LiteralPath $BackendMetadata).Path }
 function Invoke-Checked {
   param([string]$Program, [string[]]$Arguments)
   & $Program @Arguments
@@ -30,4 +32,9 @@ try {
     Invoke-Checked 'powershell.exe' @('-NoProfile', '-Command', $buildCommand)
   }
 } finally { Pop-Location }
-Invoke-Checked 'python' @("$PSScriptRoot/package_release.py", '--source', $source, '--dxvk', $dxvkPath)
+$packageArguments = @("$PSScriptRoot/package_release.py", '--source', $source, '--dxvk', $dxvkPath, '--upstream-commit', $UpstreamCommit)
+if ($BackendMetadata) { $packageArguments += @('--backend-metadata', $BackendMetadata) }
+$recipeCommit = & git -C $repoRoot rev-parse HEAD
+if ($LASTEXITCODE -ne 0) { throw 'Cannot identify the build recipe commit' }
+$packageArguments += @('--recipe-commit', $recipeCommit.Trim())
+Invoke-Checked 'python' $packageArguments

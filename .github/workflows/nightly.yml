@@ -43,59 +43,15 @@ jobs:
   build:
     needs: detect
     if: needs.detect.outputs.pending == 'true'
-    runs-on: windows-2022
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: python -m pip install meson==1.3.2 ninja==1.11.1.1
-      - name: Compile matching client and Host, test and package for MO
-        shell: pwsh
-        env:
-          UPSTREAM_COMMIT: ${{ needs.detect.outputs.commit }}
-          NIGHTLY_TAG: ${{ needs.detect.outputs.version }}
-        run: |
-          $env:NIGHTLY_TAG | Set-Content VERSION -Encoding utf8
-          $env:NIGHTLY_TAG | Set-Content third_party/l4d2-bridge/VERSION -Encoding ascii
-          ./scripts/build-from-source.ps1 -UpstreamCommit $env:UPSTREAM_COMMIT
-      - uses: actions/upload-artifact@v4
-        with:
-          name: yr-mo-nightly
-          path: |
-            dist/*.zip
-            dist/*.sha256
-          if-no-files-found: error
+    uses: ./.github/workflows/build-bridge.yml
+    with:
+      upstream_commit: ${{ needs.detect.outputs.commit }}
+      version: ${{ needs.detect.outputs.version }}
   publish:
     needs: [detect, build]
-    runs-on: ubuntu-latest
     permissions:
       contents: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: yr-mo-nightly
-          path: assets
-      - name: Publish validated Nightly
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          TAG: ${{ needs.detect.outputs.tag }}
-          UPSTREAM_COMMIT: ${{ needs.detect.outputs.commit }}
-          RECIPE_COMMIT: ${{ github.sha }}
-        run: |
-          python - <<'PY'
-          import os
-          from pathlib import Path
-          Path('notes.md').write_text('YR/MO Nightly\n\nNVIDIA commit: '+os.environ['UPSTREAM_COMMIT']+'\nRecipe commit: '+os.environ['RECIPE_COMMIT']+'\n\nx86 d3d9.dll, matching x64 Host, pinned GPLALL backend. Extract to game root. Compilation and diagnostics passed; game validation pending.\n')
-          PY
-          flags=()
-          if [[ "$TAG" == *-nightly-* ]]; then flags+=(--prerelease); fi
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --target "$RECIPE_COMMIT" --title "$TAG" --notes-file notes.md "${flags[@]}" --draft
-          fi
-          gh release upload "$TAG" assets/* --clobber
-          gh release edit "$TAG" --draft=false --prerelease=false "${flags[@]}" --notes-file notes.md
+    uses: ./.github/workflows/publish-release.yml
+    with:
+      tag: ${{ needs.detect.outputs.tag }}
+      upstream_commit: ${{ needs.detect.outputs.commit }}
