@@ -62,10 +62,13 @@ jobs:
           name: upstream-source-metadata
           path: metadata
       - name: Build upstream GCC SSE2 O3 LTO backend
-        uses: Joshua-Ashton/arch-mingw-github-action@aa9a706c02aa00e4c694a8da3546203a3bda8db5 # upstream v8
-        with:
-          command: |
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src archlinux:base-devel bash -euc '
+            pacman -Sy --noconfirm archlinux-keyring
+            pacman -Syu --needed --noconfirm mingw-w64-gcc meson glslang git
+            git config --global --add safe.directory /src
             ./package-release.sh nightly build --no-package --64-only
+          '
       - name: Validate x64 DLL and record provenance
         run: |
           mkdir -p backend
